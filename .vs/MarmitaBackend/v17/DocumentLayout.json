@@ -1,0 +1,255 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\.gitignore||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\order.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\address.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\address.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\kitlunchbox.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\kitlunchbox.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\lunchbox.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\lunchbox.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\cartitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\kit.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\kit.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\category.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\models\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:models\\cart.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\context\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:context\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:properties\\launchsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|c:\\users\\breno\\source\\repos\\marmitabackend\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{1B9151F5-2880-4894-ABEC-5F87DC44CE5C}|MarmitaBackend.csproj|solutionrelative:appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": ".gitignore",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\.gitignore",
+              "RelativeDocumentMoniker": "Models\\.gitignore",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\.gitignore",
+              "RelativeToolTip": "Models\\.gitignore",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001001|",
+              "WhenOpened": "2025-06-28T07:44:30.407Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "Order.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Order.cs",
+              "RelativeDocumentMoniker": "Models\\Order.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Order.cs",
+              "RelativeToolTip": "Models\\Order.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAgwBIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:25:17.919Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "Address.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Address.cs",
+              "RelativeDocumentMoniker": "Models\\Address.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Address.cs",
+              "RelativeToolTip": "Models\\Address.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAqAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:23:00.961Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "KitLunchBox.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\KitLunchBox.cs",
+              "RelativeDocumentMoniker": "Models\\KitLunchBox.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\KitLunchBox.cs",
+              "RelativeToolTip": "Models\\KitLunchBox.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAAcAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:17:55.027Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "Lunchbox.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Lunchbox.cs",
+              "RelativeDocumentMoniker": "Models\\Lunchbox.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Lunchbox.cs",
+              "RelativeToolTip": "Models\\Lunchbox.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T05:30:33.161Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "Kit.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Kit.cs",
+              "RelativeDocumentMoniker": "Models\\Kit.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Kit.cs",
+              "RelativeToolTip": "Models\\Kit.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:16:40.833Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "CartItem.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\CartItem.cs",
+              "RelativeDocumentMoniker": "Models\\CartItem.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\CartItem.cs",
+              "RelativeToolTip": "Models\\CartItem.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:10:40.203Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Cart.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Cart.cs",
+              "RelativeDocumentMoniker": "Models\\Cart.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Cart.cs",
+              "RelativeToolTip": "Models\\Cart.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:03:30.613Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Models\\User.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\User.cs",
+              "RelativeToolTip": "Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:02:41.62Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Category.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Category.cs",
+              "RelativeDocumentMoniker": "Models\\Category.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Models\\Category.cs",
+              "RelativeToolTip": "Models\\Category.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAYAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T07:02:17.079Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Context\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "Context\\ApplicationDbContext.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Context\\ApplicationDbContext.cs",
+              "RelativeToolTip": "Context\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAUAAAAEAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-28T05:34:21.423Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-27T19:05:15.154Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "launchSettings.json",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Properties\\launchSettings.json",
+              "RelativeDocumentMoniker": "Properties\\launchSettings.json",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\Properties\\launchSettings.json",
+              "RelativeToolTip": "Properties\\launchSettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-27T18:59:28.319Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\appsettings.json",
+              "RelativeDocumentMoniker": "appsettings.json",
+              "ToolTip": "C:\\Users\\breno\\source\\repos\\MarmitaBackend\\appsettings.json",
+              "RelativeToolTip": "appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-27T19:04:26.324Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

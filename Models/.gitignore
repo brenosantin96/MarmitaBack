@@ -1,0 +1,8 @@
+# Arquivos e pastas que devem ser ignorados no Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
