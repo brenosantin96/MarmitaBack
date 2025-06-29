@@ -1,13 +1,22 @@
-﻿public class ApplicationDbContext : DbContext
+﻿using Microsoft.EntityFrameworkCore; // 👈 ESSENCIAL!
+using MarmitaBackend.Models;
+
+public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
     {
     }
-    public DbSet<Lunchbox> Lunchboxes { get; set; } = null!;
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Lunchbox>().ToTable("Lunchboxes");
-        base.OnModelCreating(modelBuilder);
-    }
+    public DbSet<User> Users { get; set; }
+    public DbSet<Address> Addresses { get; set; }
+    public DbSet<Cart> Carts { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<Category> Categories { get; set; }
+    public DbSet<Lunchbox> Lunchboxes { get; set; }
+    public DbSet<Kit> Kits { get; set; }
+    public DbSet<KitLunchbox> KitLunchboxes { get; set; }
+    public DbSet<Order> Orders { get; set; }
+
+
+
 }
