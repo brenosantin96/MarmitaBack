@@ -42,34 +42,44 @@ namespace MarmitaBackend.Controllers
         }
 
         // PUT: api/Lunchboxes/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutLunchbox(int id, Lunchbox lunchbox)
         {
-            if (id != lunchbox.Id)
+            var existingLunchbox = await _context.Lunchboxes.FindAsync(id);
+
+            if (existingLunchbox == null)
             {
-                return BadRequest();
+                return NotFound("Lunchbox not found.");
             }
 
-            _context.Entry(lunchbox).State = EntityState.Modified;
-
-            try
+            if (!ModelState.IsValid)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!LunchboxExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(ModelState); // validating [required], [range].
             }
 
-            return NoContent();
+            //verificando se categoria existe
+            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == lunchbox.CategoryId);
+            if (!categoryExists)
+            {
+                return BadRequest("Category does not exist.");
+            }
+
+            // Atualiza os campos
+
+
+            existingLunchbox.Name = lunchbox.Name;
+            existingLunchbox.Description = lunchbox.Description;
+            existingLunchbox.Price = lunchbox.Price;
+            existingLunchbox.ImageUrl = lunchbox.ImageUrl;
+            existingLunchbox.CategoryId = lunchbox.CategoryId;
+
+
+
+            await _context.SaveChangesAsync();
+
+            return NoContent(); // padrão REST para updates
+
+
         }
 
         // POST: api/Lunchboxes
@@ -81,13 +91,13 @@ namespace MarmitaBackend.Controllers
                 return BadRequest("Lunchbox cannot be null.");
             }
 
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState); // validating [required], [range].
             }
 
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == lunchbox.CategoryId);
-            if(!categoryExists)
+            if (!categoryExists)
             {
                 return BadRequest("Category does not exist.");
             }
@@ -114,7 +124,7 @@ namespace MarmitaBackend.Controllers
             _context.Lunchboxes.Remove(lunchbox);
             await _context.SaveChangesAsync();
 
-            return NoContent();
+            return Ok(new { message = $"Lunchbox com ID {id} foi deletada com sucesso." });
         }
 
         private bool LunchboxExists(int id)

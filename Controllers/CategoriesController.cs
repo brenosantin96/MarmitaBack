@@ -42,32 +42,26 @@ namespace MarmitaBackend.Controllers
         }
 
         // PUT: api/Categories/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCategory(int id, Category category)
         {
-            if (id != category.Id)
+
+            var existingCategory = await _context.Categories.FindAsync(id);
+
+            if(existingCategory == null)
             {
-                return BadRequest();
+                return NotFound("Category not found.");
             }
 
-            _context.Entry(category).State = EntityState.Modified;
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState); 
+            }
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CategoryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            //applying changes
+            existingCategory.Name = category.Name;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }

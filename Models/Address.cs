@@ -1,9 +1,15 @@
-﻿namespace MarmitaBackend.Models
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using System.Text.Json.Serialization;
+
+namespace MarmitaBackend.Models
 {
     public class Address
     {
         public int Id { get; set; }
         public int UserId { get; set; }
+        
+        [JsonIgnore]
+        [ValidateNever]
         public User User { get; set; } = null!;
         public string ZipCode { get; set; }
         public string Street { get; set; }
