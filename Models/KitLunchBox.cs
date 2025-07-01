@@ -20,5 +20,3 @@
 //Essa classe é a tabela de junção entre Kit e Lunchbox
 //Contém a propriedade Quantity, que diz quantas vezes essa marmita aparece no kit
 
-
-
