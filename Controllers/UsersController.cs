@@ -1,4 +1,5 @@
-﻿using MarmitaBackend.Models;
+﻿using MarmitaBackend.Configurations;
+using MarmitaBackend.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -20,11 +21,13 @@ namespace MarmitaBackend.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly JwtConfig _jwtConfig;
 
-        public UsersController(ApplicationDbContext context, IConfiguration configuration)
+        public UsersController(ApplicationDbContext context, IConfiguration configuration, JwtConfig jwtConfig)
         {
             _context = context;
             _configuration = configuration;
+            _jwtConfig = jwtConfig;
         }
 
 
@@ -64,6 +67,7 @@ namespace MarmitaBackend.Controllers
                 return BadRequest(ModelState);
             }
 
+            //check if the user exists in the database
             var existingUser = _context.Users
        .FirstOrDefault(u => u.Email == login.Email && u.Password == login.Password);
 
@@ -71,44 +75,46 @@ namespace MarmitaBackend.Controllers
             {
                 return Unauthorized("Invalid email or password.");
             }
-           
-                //usando o método GenerateJwtToken para criar o token JWT
-                var token = GenerateJwtToken(existingUser);
-                return Ok(new
+
+            //usando o método GenerateJwtToken para criar o token JWT
+            var token = GenerateJwtToken(existingUser);
+            return Ok(new
+            {
+                Token = token,
+                User = new
                 {
-                    Token = token,
-                    User = new
-                    {
-                        existingUser.Id,
-                        existingUser.Name,
-                        existingUser.Email,
-                        existingUser.isAdmin
-                    }
-                }); // Retorna o usuário autenticado + token JWT
-            
+                    existingUser.Id,
+                    existingUser.Name,
+                    existingUser.Email,
+                    existingUser.isAdmin
+                }
+            }); // Retorna o usuário autenticado + token JWT
+
 
 
         }
 
         private string GenerateJwtToken(User user)
         {
-            // Lê a chave do appsettings.json via IConfiguration
-            var secretKey = _configuration["JwtSettings:SecretKey"];
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfig.Key));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // Define os claims do token, pegados do usuário autenticado
             var claims = new[]
             {
-            new Claim(ClaimTypes.Name, user.Name),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email),
-            new Claim(ClaimTypes.Role, user.isAdmin ? "Admin" : "User")
-        };
+        new Claim(ClaimTypes.Name, user.Name),
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim(ClaimTypes.Role, user.isAdmin ? "Admin" : "User")
+    };
 
             var token = new JwtSecurityToken(
+                issuer: _jwtConfig.Issuer,
+                audience: _jwtConfig.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(4),
-                signingCredentials: creds);
+                expires: DateTime.UtcNow.AddMinutes(_jwtConfig.TokenValidityMins),
+                signingCredentials: creds
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }

@@ -8,11 +8,11 @@
         public Cart Cart { get; set; } = null!;
 
         //Produto individual
-        public int? LunchboxId { get; set; }
-        public Lunchbox? Lunchbox { get; set; }
+        public int? LunchboxId { get; set; } // Pode ser nulo se for um kit
+        public Lunchbox? Lunchbox { get; set; } 
 
         // Kit de produtos
-        public int? KitId { get; set; }
+        public int? KitId { get; set; } // Pode ser nulo se for uma marmita individual
         public Kit? Kit { get; set; }
 
         public int Quantity { get; set; }

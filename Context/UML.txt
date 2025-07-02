@@ -1,7 +1,7 @@
-﻿🧱 Entidades e seus relacionamentos (UML Simplificado)
+﻿Entidades e seus relacionamentos (UML Simplificado)
 Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e relacionamentos).
 
-📦 Lunchbox
+Lunchbox
 + Lunchbox
 -------------
 + Id : int
@@ -13,14 +13,14 @@ Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e r
 # FK: Category
 
 
-🗂️ Category
+Category
 + Category
 -------------
 + Id : int
 + Name : string
 
 
-👤 User
+User
 + User
 -------------
 + Id : int
@@ -29,7 +29,7 @@ Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e r
 + Password : string
 + IsAdmin : bool
 
-🛒 Cart
+Cart
 + Cart
 -------------
 + Id : int
@@ -40,7 +40,7 @@ Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e r
 # FK: User
 
 
-🛍️ CartItem
+CartItem
 + CartItem
 -------------
 + Id : int
@@ -52,7 +52,7 @@ Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e r
 # FK: Lunchbox
 
 
-📦 Address
+Address
 + Address
 -------------
 + Id : int
@@ -68,7 +68,7 @@ Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e r
 # FK: User
 
 
-📦 Order
+Order
 + Order
 -------------
 + Id : int
@@ -90,7 +90,7 @@ Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e r
 # FK: Address (opcional)
 
 
-🔁 Resumo dos Relacionamentos
+Resumo dos Relacionamentos
 
 User 1:N Address
 User 1:N Cart
@@ -102,7 +102,7 @@ Cart 1:1 Order
 Order → Address (opcional)
 
 
-✅ Considerações e Extras
+Considerações e Extras
 Um carrinho é criado ao começar uma sessão, mesmo antes do checkout.
 O pedido (Order) só é gerado após agendamento + pagamento.
 A Cart pode ser reutilizável, ou apenas para o pedido atual (isso você define).
