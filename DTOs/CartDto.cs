@@ -1,4 +1,4 @@
-﻿namespace MarmitaBackend.DTOs
+﻿namespace MarmitaBackend.DTOs //Data transfer object
 {
     public class CartDto
     {

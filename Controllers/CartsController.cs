@@ -27,14 +27,40 @@ namespace MarmitaBackend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Cart>> GetCart(int id)
         {
-            var cart = await _context.Carts.FindAsync(id);
+
+            var userId = UserHelper.GetUserId(User);
+
+            if (userId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
             if (cart == null)
             {
                 return NotFound();
             }
 
-            return cart;
+            // Criar o DTO de resposta
+            var response = new CartDto
+            {
+                Id = cart.Id,
+                CreatedAt = cart.CreatedAt,
+                Items = cart.CartItems.Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.Id,
+                    LunchboxId = ci.LunchboxId,
+                    KitId = ci.KitId,
+                    Quantity = ci.Quantity,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList()
+            };
+
+            return Ok(response);
+
         }
 
 
@@ -107,6 +133,7 @@ namespace MarmitaBackend.Controllers
                 CreatedAt = cart.CreatedAt,
                 Items = cart.CartItems.Select(ci => new CartItemDto
                 {
+                    CartItemId = ci.Id,
                     Quantity = ci.Quantity,
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
@@ -114,46 +141,116 @@ namespace MarmitaBackend.Controllers
                 }).ToList()
             };
 
-            return Ok(cart);
+            return Ok(response);
+            //Quando se tenta retorna return Ok(cart);, o ASP.NET Core vai tentar converter esse objeto para JSON. Mas isso vai dar erro de OB Cycle Reference, porque o objeto Cart tem uma lista de CartItems, que por sua vez tem referências a Kit e Lunchbox, que podem ter referências circulares.
         }
 
-
-        // PUT: api/Carts/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCart(int id, Cart cart)
+        [Authorize]
+        [HttpPost("remove")]
+        public async Task<IActionResult> RemoveFromCart([FromBody] RemoveFromCartRequest request)
         {
-            if (id != cart.Id)
-            {
-                return BadRequest();
-            }
+            var userId = UserHelper.GetUserId(User);
 
-            _context.Entry(cart).State = EntityState.Modified;
+            if (userId == null)
+                return BadRequest("Usuário não autenticado");
 
-            try
+            // Inclui os itens do carrinho + Kits e Lunchboxes para ProductName
+            var userCart = await _context.Carts
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Kit)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Lunchbox)
+                .FirstOrDefaultAsync(c => c.UserId == userId && c.IsCheckedOut == false);
+
+            if (userCart == null)
+                return BadRequest("Carrinho ativo não encontrado");
+
+            // Localiza o item a ser removido
+            var itemToRemove = userCart.CartItems
+                .FirstOrDefault(i => i.Id == request.CartItemId);
+
+            if (itemToRemove == null)
+                return NotFound($"Item com ID {request.CartItemId} não encontrado.");
+
+            // Subtrai a quantidade ou remove
+            itemToRemove.Quantity -= request.Quantity;
+
+            if (itemToRemove.Quantity <= 0)
+                userCart.CartItems.Remove(itemToRemove);
+
+            await _context.SaveChangesAsync();
+
+            // Cria DTO de resposta
+            var response = new CartDto
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CartExists(id))
+                Id = userCart.Id,
+                CreatedAt = userCart.CreatedAt,
+                Items = userCart.CartItems.Select(ci => new CartItemDto
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+                    CartItemId = ci.Id,
+                    Quantity = ci.Quantity,
+                    KitId = ci.KitId,
+                    LunchboxId = ci.LunchboxId,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList()
+            };
 
-            return NoContent();
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPost("remove-full")]
+        public async Task<IActionResult> RemoveItemCompletelyFromCart([FromBody] RemoveFromCartRequest request)
+        {
+            var userId = UserHelper.GetUserId(User);
+
+            if (userId == null)
+                return BadRequest("Usuário não autenticado");
+
+            var userCart = await _context.Carts
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Kit)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Lunchbox)
+                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
+
+            if (userCart == null)
+                return BadRequest("Carrinho ativo não encontrado");
+
+            var itemToRemove = userCart.CartItems
+                .FirstOrDefault(i => i.Id == request.CartItemId);
+
+            if (itemToRemove == null)
+                return NotFound($"Item com ID {request.CartItemId} não encontrado.");
+
+            // Remove completamente do carrinho
+            userCart.CartItems.Remove(itemToRemove);
+            await _context.SaveChangesAsync();
+
+            // Monta o DTO de resposta com os itens restantes
+            var response = new CartDto
+            {
+                Id = userCart.Id,
+                CreatedAt = userCart.CreatedAt,
+                Items = userCart.CartItems.Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.Id,
+                    Quantity = ci.Quantity,
+                    KitId = ci.KitId,
+                    LunchboxId = ci.LunchboxId,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList()
+            };
+
+            return Ok(response);
         }
 
         // DELETE: api/Carts/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCart(int id)
         {
-            var cart = await _context.Carts.FindAsync(id);
+            //encontra carrinho com o id enviado e que nao tenha sido finalizado
+            var cart = await _context.Carts.FirstOrDefaultAsync(c => c.Id == id && c.IsCheckedOut == false);
             if (cart == null)
             {
                 return NotFound();
@@ -165,9 +262,5 @@ namespace MarmitaBackend.Controllers
             return NoContent();
         }
 
-        private bool CartExists(int id)
-        {
-            return _context.Carts.Any(e => e.Id == id);
-        }
     }
 }
