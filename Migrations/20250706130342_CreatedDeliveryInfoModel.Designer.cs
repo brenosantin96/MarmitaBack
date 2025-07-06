@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MarmitaBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706130342_CreatedDeliveryInfoModel")]
+    partial class CreatedDeliveryInfoModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,14 +173,9 @@ namespace MarmitaBackend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AddressId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("DeliveryInfo");
                 });
@@ -298,8 +296,9 @@ namespace MarmitaBackend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("PaymentMethodId")
-                        .HasColumnType("int");
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasColumnType("longtext");
 
                     b.Property<string>("Phone")
                         .IsRequired()
@@ -315,32 +314,9 @@ namespace MarmitaBackend.Migrations
 
                     b.HasIndex("CartId");
 
-                    b.HasIndex("DeliveryInfoId")
-                        .IsUnique();
-
-                    b.HasIndex("PaymentMethodId");
+                    b.HasIndex("DeliveryInfoId");
 
                     b.ToTable("Orders");
-                });
-
-            modelBuilder.Entity("MarmitaBackend.Models.PaymentMethod", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("PaymentMethod");
                 });
 
             modelBuilder.Entity("MarmitaBackend.Models.User", b =>
@@ -377,7 +353,7 @@ namespace MarmitaBackend.Migrations
             modelBuilder.Entity("MarmitaBackend.Models.Address", b =>
                 {
                     b.HasOne("MarmitaBackend.Models.User", "User")
-                        .WithMany("Addresses")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -425,15 +401,7 @@ namespace MarmitaBackend.Migrations
                         .WithMany()
                         .HasForeignKey("AddressId");
 
-                    b.HasOne("MarmitaBackend.Models.User", "User")
-                        .WithMany("DeliveryInfos")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Address");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MarmitaBackend.Models.Kit", b =>
@@ -486,22 +454,14 @@ namespace MarmitaBackend.Migrations
                         .IsRequired();
 
                     b.HasOne("MarmitaBackend.Models.DeliveryInfo", "DeliveryInfo")
-                        .WithOne("Order")
-                        .HasForeignKey("MarmitaBackend.Models.Order", "DeliveryInfoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MarmitaBackend.Models.PaymentMethod", "PaymentMethod")
-                        .WithMany("Orders")
-                        .HasForeignKey("PaymentMethodId")
+                        .WithMany()
+                        .HasForeignKey("DeliveryInfoId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Cart");
 
                     b.Navigation("DeliveryInfo");
-
-                    b.Navigation("PaymentMethod");
                 });
 
             modelBuilder.Entity("MarmitaBackend.Models.Cart", b =>
@@ -514,11 +474,6 @@ namespace MarmitaBackend.Migrations
                     b.Navigation("Lunchboxes");
                 });
 
-            modelBuilder.Entity("MarmitaBackend.Models.DeliveryInfo", b =>
-                {
-                    b.Navigation("Order");
-                });
-
             modelBuilder.Entity("MarmitaBackend.Models.Kit", b =>
                 {
                     b.Navigation("KitLunchboxes");
@@ -527,18 +482,6 @@ namespace MarmitaBackend.Migrations
             modelBuilder.Entity("MarmitaBackend.Models.Lunchbox", b =>
                 {
                     b.Navigation("KitLunchboxes");
-                });
-
-            modelBuilder.Entity("MarmitaBackend.Models.PaymentMethod", b =>
-                {
-                    b.Navigation("Orders");
-                });
-
-            modelBuilder.Entity("MarmitaBackend.Models.User", b =>
-                {
-                    b.Navigation("Addresses");
-
-                    b.Navigation("DeliveryInfos");
                 });
 #pragma warning restore 612, 618
         }

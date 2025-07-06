@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MarmitaBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250706190813_CreatedPaymentMethodTable")]
+    partial class CreatedPaymentMethodTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -170,14 +173,9 @@ namespace MarmitaBackend.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AddressId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("DeliveryInfo");
                 });
@@ -377,7 +375,7 @@ namespace MarmitaBackend.Migrations
             modelBuilder.Entity("MarmitaBackend.Models.Address", b =>
                 {
                     b.HasOne("MarmitaBackend.Models.User", "User")
-                        .WithMany("Addresses")
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -425,15 +423,7 @@ namespace MarmitaBackend.Migrations
                         .WithMany()
                         .HasForeignKey("AddressId");
 
-                    b.HasOne("MarmitaBackend.Models.User", "User")
-                        .WithMany("DeliveryInfos")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Address");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("MarmitaBackend.Models.Kit", b =>
@@ -532,13 +522,6 @@ namespace MarmitaBackend.Migrations
             modelBuilder.Entity("MarmitaBackend.Models.PaymentMethod", b =>
                 {
                     b.Navigation("Orders");
-                });
-
-            modelBuilder.Entity("MarmitaBackend.Models.User", b =>
-                {
-                    b.Navigation("Addresses");
-
-                    b.Navigation("DeliveryInfos");
                 });
 #pragma warning restore 612, 618
         }

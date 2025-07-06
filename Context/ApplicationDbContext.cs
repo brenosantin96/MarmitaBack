@@ -24,7 +24,17 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
             .IsUnique();
+
+        modelBuilder.Entity<Address>()
+    .HasOne(a => a.User)
+    .WithMany(u => u.Addresses)
+    .HasForeignKey(a => a.UserId);
+
+
+
     }
+
+    public DbSet<MarmitaBackend.Models.DeliveryInfo> DeliveryInfo { get; set; } = default!;
 
 
 

@@ -48,6 +48,7 @@ namespace MarmitaBackend.Controllers
             var response = new CartDto
             {
                 Id = cart.Id,
+                UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
                 Items = cart.CartItems.Select(ci => new CartItemDto
                 {
@@ -130,6 +131,7 @@ namespace MarmitaBackend.Controllers
             var response = new CartDto
             {
                 Id = cart.Id,
+                UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
                 Items = cart.CartItems.Select(ci => new CartItemDto
                 {
@@ -231,6 +233,7 @@ namespace MarmitaBackend.Controllers
             var response = new CartDto
             {
                 Id = userCart.Id,
+                UserId = userCart.UserId,
                 CreatedAt = userCart.CreatedAt,
                 Items = userCart.CartItems.Select(ci => new CartItemDto
                 {
