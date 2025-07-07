@@ -57,7 +57,8 @@ namespace MarmitaBackend.Controllers
                     KitId = ci.KitId,
                     Quantity = ci.Quantity,
                     ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
-                }).ToList()
+                }).ToList(),
+                isCheckedOut = cart.IsCheckedOut
             };
 
             return Ok(response);
@@ -140,7 +141,8 @@ namespace MarmitaBackend.Controllers
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
                     ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
-                }).ToList()
+                }).ToList(),
+                isCheckedOut = cart.IsCheckedOut
             };
 
             return Ok(response);
@@ -194,7 +196,59 @@ namespace MarmitaBackend.Controllers
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
                     ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
-                }).ToList()
+                }).ToList(),
+                isCheckedOut = userCart.IsCheckedOut
+            };
+
+            return Ok(response);
+        }
+
+        [Authorize]
+        [HttpPut("update-quantity")]
+        public async Task<IActionResult> UpdateCartItemQuantity([FromBody] UpdateCartItemQuantityRequest request)
+        {
+            var userId = UserHelper.GetUserId(User);
+
+            if (userId == null)
+                return Unauthorized("Usuário não autenticado");
+
+            if (request.NewQuantity < 1)
+                return BadRequest("A quantidade deve ser maior que zero.");
+
+            //obtem carrinho associado ao usuario e que nao esteja concluido.
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Kit)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Lunchbox)
+                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
+
+            if (cart == null)
+                return NotFound("Carrinho não encontrado.");
+
+            var cartItem = cart.CartItems.FirstOrDefault(ci => ci.Id == request.CartItemId);
+
+            if (cartItem == null)
+                return NotFound($"Item com ID {request.CartItemId} não encontrado no carrinho.");
+
+            cartItem.Quantity = request.NewQuantity;
+
+            await _context.SaveChangesAsync();
+
+            var response = new CartDto
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                CreatedAt = cart.CreatedAt,
+                Items = cart.CartItems.Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.Id,
+                    Quantity = ci.Quantity,
+                    KitId = ci.KitId,
+                    LunchboxId = ci.LunchboxId,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList(),
+                isCheckedOut = cart.IsCheckedOut
             };
 
             return Ok(response);
@@ -242,7 +296,8 @@ namespace MarmitaBackend.Controllers
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
                     ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
-                }).ToList()
+                }).ToList(),
+                isCheckedOut = userCart.IsCheckedOut
             };
 
             return Ok(response);

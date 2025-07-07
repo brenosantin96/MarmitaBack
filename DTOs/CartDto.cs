@@ -6,6 +6,7 @@
         public int UserId { get; set; }
         public DateTime CreatedAt { get; set; }
         public List<CartItemDto> Items { get; set; }
+        public bool isCheckedOut { get; set; }
     }
 
 }

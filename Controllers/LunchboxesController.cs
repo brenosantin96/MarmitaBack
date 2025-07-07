@@ -127,9 +127,5 @@ namespace MarmitaBackend.Controllers
             return Ok(new { message = $"Lunchbox com ID {id} foi deletada com sucesso." });
         }
 
-        private bool LunchboxExists(int id)
-        {
-            return _context.Lunchboxes.Any(e => e.Id == id);
-        }
     }
 }

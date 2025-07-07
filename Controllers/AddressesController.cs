@@ -115,9 +115,6 @@ namespace MarmitaBackend.Controllers
             return NoContent();
         }
 
-        private bool AddressExists(int id)
-        {
-            return _context.Addresses.Any(e => e.Id == id);
-        }
+
     }
 }
