@@ -1,0 +1,36 @@
+
+****************************
+JWT BEARER:
+The Audience is your API, i.e. the resource that will consume the JWT token to authorize access.
+The Issuer is the authentication server that issues the token.
+The Audience is the resource server (your API) that validates and accepts the token.
+
+Suppose you're using an external authentication service, such as Auth0 or Azure AD:
+Issuer: The authentication server (e.g. https://meudominio.auth0.com/).
+Audience: Your API (for example, https://api.meudominio.com).
+
+ValidateIssuerSigningKey and IssuerSigningKey: Required to validate the token signature.
+ValidateIssuer and ValidIssuer: Required if you want to validate the issuer of the token.
+ValidateAudience and ValidAudience: Required if you want to validate the token's audience.
+ValidateLifetime: Recommended to ensure that expired tokens are not accepted.
+The other properties (ClockSkew, RequireHttpsMetadata, SaveToken) are optional and depend on the needs of your project.
+****************************
+
+****************************
+JWT BEARER:
+O Audience é a sua API, ou seja, o recurso que consumirá o token JWT para autorizar o acesso.
+O Issuer é o servidor de autenticação que emite o token.
+O Audience é o servidor de recursos (sua API) que valida e aceita o token.
+
+Suponha que você esteja usando um serviço externo de autenticação, como o Auth0 ou Azure AD:
+Issuer: O servidor de autenticação (por exemplo, https://meudominio.auth0.com/).
+Audience: Sua API (por exemplo, https://api.meudominio.com).
+
+ValidateIssuerSigningKey e IssuerSigningKey: Obrigatórios para validar a assinatura do token.
+ValidateIssuer e ValidIssuer: Obrigatórios se você quiser validar o emissor do token.
+ValidateAudience e ValidAudience: Obrigatórios se você quiser validar o público do token.
+ValidateLifetime: Recomendado para garantir que tokens expirados não sejam aceitos.
+As outras propriedades (ClockSkew, RequireHttpsMetadata, SaveToken) são opcionais e dependem das necessidades do seu projeto.
+****************************
+
+

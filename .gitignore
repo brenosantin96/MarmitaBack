@@ -1,0 +1,62 @@
+# Arquivos e pastas que devem ser ignorados no Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+bin/
+obj/
+out/
+Debug/
+Release/
+
+# Rider / VS Code / VS cache
+.vs/
+.idea/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# DotCover
+*.dotCover
+
+# Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# Others
+*.dbmdl
+*.bak
+*.backup
+*.mdf
+*.ldf
+
+# Mac files
+.DS_Store
+
+# Node (se tiver frontend junto)
+node_modules/
+
+# Environment & Secrets
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+.env
+.env.*

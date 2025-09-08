@@ -1,0 +1,69 @@
+
+**********************
+Controller: Addresses (/api/Addresses)
+GET /api/Addresses – Listar todos os endereços
+GET /api/Addresses/{id} – Buscar endereço por ID
+POST /api/Addresses – Criar novo endereço
+PUT /api/Addresses/{id} – Atualizar endereço por ID
+DELETE /api/Addresses/{id} – Deletar endereço por ID
+**********************
+
+**********************
+Controller: Categories (/api/Categories)
+GET /api/Categories – Listar todas as categorias
+GET /api/Categories/{id} – Buscar categoria por ID
+POST /api/Categories – Criar nova categoria
+PUT /api/Categories/{id} – Atualizar categoria por ID
+DELETE /api/Categories/{id} – Deletar categoria por ID
+**********************
+
+**********************
+Controller: Lunchboxes (/api/Lunchboxes)
+GET /api/Lunchboxes – Listar todas as marmitas
+GET /api/Lunchboxes/{id} – Buscar marmita por ID
+POST /api/Lunchboxes – Criar nova marmita
+PUT /api/Lunchboxes/{id} – Atualizar marmita por ID
+DELETE /api/Lunchboxes/{id} – Deletar marmita por ID
+**********************
+
+**********************
+Controller: Kits (/api/Kits)
+GET /api/Kits – Listar todos os kits
+GET /api/Kits/{id} – Buscar kit por ID
+POST /api/Kits – Criar novo kit
+PUT /api/Kits/{id} – Atualizar kit por ID
+DELETE /api/Kits/{id} – Deletar kit por ID
+POST /api/Kits/{kitId}/lunchboxes – Adicionar lista de marmitas ao kit
+**********************
+
+**********************
+Controller: Users (/api/Users)
+GET /api/Users – Listar todos os usuários
+GET /api/Users/{id} – Buscar usuário por ID
+POST /api/Users – Criar novo usuário
+PUT /api/Users/{id} – Atualizar usuário por ID
+DELETE /api/Users/{id} – Deletar usuário por ID
+POST /api/Users/register – Registrar novo usuário
+POST /api/Users/login – Login e gerar token JWT
+**********************
+
+**********************
+Controller: DeliveryInfo (/api/DeliveryInfo)
+GET /api/DeliveryInfo/{id} – Buscar informações de entrega por ID
+POST /api/DeliveryInfo – Criar informações de entrega
+**********************
+
+**********************
+Controller: Orders (/api/Orders)
+GET /api/Orders – Listar todos os pedidos (admins)
+GET /api/Orders/{id} – Buscar pedido por ID
+POST /api/Orders – Criar novo pedido
+DELETE /api/Orders/{id} – Deletar pedido por ID
+**********************
+
+**********************
+Controller: Carts (/api/Carts)
+POST /api/Carts/add – Adicionar item ao carrinho
+POST /api/Carts/remove – Remover item do carrinho (parcial ou total)
+PUT /api/Carts/update-quantity – Atualizar a quantidade de um item no carrinho
+**********************

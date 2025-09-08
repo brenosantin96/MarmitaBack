@@ -1,0 +1,110 @@
+﻿Entidades e seus relacionamentos (UML Simplificado)
+Vamos usar o estilo de UML de classes para modelagem de banco (com atributos e relacionamentos).
+
+Lunchbox
++ Lunchbox
+-------------
++ Id : int
++ Name : string
++ Description : string
++ Price : decimal
++ CategoryId : int
+-------------
+# FK: Category
+
+
+Category
++ Category
+-------------
++ Id : int
++ Name : string
+
+
+User
++ User
+-------------
++ Id : int
++ Name : string
++ Email : string
++ Password : string
++ IsAdmin : bool
+
+Cart
++ Cart
+-------------
++ Id : int
++ UserId : int
++ CreatedAt : DateTime
++ IsCheckedOut : bool
+-------------
+# FK: User
+
+
+CartItem
++ CartItem
+-------------
++ Id : int
++ CartId : int
++ LunchboxId : int
++ Quantity : int
+-------------
+# FK: Cart
+# FK: Lunchbox
+
+
+Address
++ Address
+-------------
++ Id : int
++ UserId : int
++ ZipCode : string
++ Street : string
++ City : string
++ State : string
++ Neighborhood : string
++ Number : string
++ Complement : string
+-------------
+# FK: User
+
+
+Order
++ Order
+-------------
++ Id : int
++ CartId : int
++ AddressId : int?      // nulo se for retirada
++ DeliveryType : string // "Entrega" ou "Retirada"
++ DeliveryDate : DateTime
++ DeliveryPeriod : string // "Manhã", "Tarde", "Noite"
++ CanLeaveAtDoor : bool
++ FullName : string      // Para nota fiscal
++ Phone : string
++ PaymentMethod : string // ex: "PIX"
++ Subtotal : decimal
++ DeliveryFee : decimal
++ Total : decimal
++ CreatedAt : DateTime
+-------------
+# FK: Cart
+# FK: Address (opcional)
+
+
+Resumo dos Relacionamentos
+
+User 1:N Address
+User 1:N Cart
+Cart 1:N CartItem
+CartItem N:1 Lunchbox
+Lunchbox N:1 Category
+Cart 1:1 Order
+
+Order → Address (opcional)
+
+
+Considerações e Extras
+Um carrinho é criado ao começar uma sessão, mesmo antes do checkout.
+O pedido (Order) só é gerado após agendamento + pagamento.
+A Cart pode ser reutilizável, ou apenas para o pedido atual (isso você define).
+A modelagem permite flexibilidade para entregar ou retirar.
+
