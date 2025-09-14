@@ -4,6 +4,7 @@ using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
 using MarmitaBackend.Utils;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ namespace MarmitaBackend.Controllers
             _context = context;
             _configuration = configuration;
             _jwtConfig = jwtConfig;
-            
+
         }
 
 
@@ -179,6 +180,66 @@ namespace MarmitaBackend.Controllers
             catch (Exception ex)
             {
                 return Unauthorized(new { message = "Token inválido", error = ex.Message });
+
+            }
+        }
+
+        [HttpGet]
+        [Route("me")]
+        public IActionResult ValidateToken()
+        {
+            try
+            {
+                var authHeader = Request.Headers["Authorization"].FirstOrDefault();
+
+                if (authHeader == null)
+                {
+                    return Unauthorized(new { msg = "Token não fornecido" });
+                }
+
+                var token = authHeader.Substring("Bearer ".Length).Trim();
+                var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(_jwtConfig.Key);
+
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuerSigningKey = true,
+                    ClockSkew = TimeSpan.Zero // não deixa margem extra além do exp
+
+
+                }, out SecurityToken validatedToken);
+
+                //pegando claims do token
+                var userId = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+                var name = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+                var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+                var role = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+
+                //condição ternária
+                var isAdmin = role == "Admin" ? true : false;
+
+
+                return Ok(new
+                {
+                    msg = "Token válido",
+                    user = new 
+                    {
+                        id = userId,
+                        name = name,
+                        email = email,
+                        isAdmin = isAdmin
+                    }
+                }
+                );
+
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized(new { msg = "Token inválido", error = ex.Message });
 
             }
         }

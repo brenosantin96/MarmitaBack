@@ -2,8 +2,10 @@ using Google.Apis.Auth;
 using MarmitaBackend.Configurations;
 using MarmitaBackend.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
 using System.Text;
 
 
@@ -15,11 +17,9 @@ namespace MarmitaBackend
         {
             var builder = WebApplication.CreateBuilder(args);
 
-
             //GoogleAuth
             builder.Services.Configure<GoogleAuthSettings>(
             builder.Configuration.GetSection("Authentication:Google"));
-
 
             // Add services to the container
             builder.Services.AddControllers();

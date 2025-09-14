@@ -90,73 +90,79 @@ namespace MarmitaBackend.Controllers
         [Route("/api/LunchboxesWithImage/{id}")]
         public async Task<IActionResult> PutLunchboxWithImage(int id, [FromForm] LunchboxUpdateDto dto)
         {
-            var existingLunchbox = await _context.Lunchboxes.FindAsync(id);
+            // dto pode ser null se o content-type/form vier quebrado
+            if (dto is null)
+                return BadRequest("No form data received.");
 
+            var existingLunchbox = await _context.Lunchboxes.FindAsync(id);
             if (existingLunchbox == null)
-            {
                 return NotFound("Lunchbox not found.");
-            }
 
             if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState); // validating [required], [range].
-            }
+                return BadRequest(ModelState);
 
-            //verifica se categoria existe
+            // valida categoria
             var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
             if (!categoryExists)
-            {
                 return BadRequest("Category does not exist.");
-            }
 
-            // Atualiza os campos básicos
-
+            // Atualiza campos básicos
             existingLunchbox.Name = dto.Name;
             existingLunchbox.Description = dto.Description;
             existingLunchbox.Price = dto.Price;
             existingLunchbox.CategoryId = dto.CategoryId;
             existingLunchbox.PortionGram = dto.PortionGram;
 
-            //Troca imagem se vier uma nova
-            if (dto.Image != null)
+            // --- Processamento de imagem (opcional) ---
+            // Fallback: se o binder não popular dto.Image, tenta pegar do Request.
+            IFormFile? image = dto.Image;
+            if (image == null && Request.HasFormContentType && Request.Form.Files.Count > 0)
             {
+                // tenta pelo nome "image"; se não achar, pega a primeira
+                image = Request.Form.Files["image"] ?? Request.Form.Files.FirstOrDefault();
+            }
+
+            // só processa se realmente veio um arquivo válido
+            var hasNewImage = image != null
+                              && image.Length > 0
+                              && !string.IsNullOrWhiteSpace(image.FileName);
+
+            if (hasNewImage)
+            {
+                // Remove a imagem antiga se existir
                 if (!string.IsNullOrEmpty(existingLunchbox.ImageUrl))
                 {
-                    string oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", existingLunchbox.ImageUrl.TrimStart('/'));
+                    string oldPath = Path.Combine(
+                        Directory.GetCurrentDirectory(),
+                        "wwwroot",
+                        existingLunchbox.ImageUrl.TrimStart('/'));
+
                     if (System.IO.File.Exists(oldPath))
-                    {
                         System.IO.File.Delete(oldPath);
-                    }
-
                 }
+
+                // Garante pasta de upload
+                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/lunchboxes");
+                if (!Directory.Exists(uploadsFolder))
+                    Directory.CreateDirectory(uploadsFolder);
+
+                // Salva nova imagem
+                string uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(image!.FileName)}";
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    await image.CopyToAsync(fileStream);
+
+                // Atualiza caminho no banco
+                existingLunchbox.ImageUrl = "/images/lunchboxes/" + uniqueFileName;
             }
-
-            //Saving image in server
-            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/lunchboxes");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-            //creating uniqueName
-            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await dto.Image.CopyToAsync(fileStream);
-            }
-
-
-            // Atualiza o caminho no banco
-            existingLunchbox.ImageUrl = "/images/lunchboxes/" + uniqueFileName;
+            // --- fim processamento de imagem ---
 
             await _context.SaveChangesAsync();
-
             return NoContent(); // padrão REST para updates
-
-
         }
+
+
 
         // POST: api/Lunchboxes
         [HttpPost]
@@ -254,6 +260,12 @@ namespace MarmitaBackend.Controllers
             if (lunchbox == null)
             {
                 return NotFound();
+            }
+
+            //se existir algum cart com essa lunchboxId, nao vai excluir.
+            if (_context.CartItems.Any(c => c.LunchboxId == id))
+            {
+                return BadRequest(new { error = "Não é possível deletar, existem carrinhos usando essa lunchbox." });
             }
 
             //getting image in server
