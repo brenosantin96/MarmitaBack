@@ -28,6 +28,8 @@ namespace MarmitaBackend.Controllers
         public async Task<ActionResult<Cart>> GetCart(int id)
         {
 
+
+
             var userId = UserHelper.GetUserId(User);
 
             if (userId == null)
@@ -45,6 +47,58 @@ namespace MarmitaBackend.Controllers
             }
 
             // Criar o DTO de resposta
+            var response = new CartDto
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                CreatedAt = cart.CreatedAt,
+                Items = cart.CartItems.Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.Id,
+                    LunchboxId = ci.LunchboxId,
+                    KitId = ci.KitId,
+                    Quantity = ci.Quantity,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList(),
+                isCheckedOut = cart.IsCheckedOut
+            };
+
+            return Ok(response);
+
+        }
+
+        // GET: api/Carts/GetCartByUserId/5
+        [HttpGet("GetCartByUserId/{userId}")]
+        public async Task<ActionResult<Cart>> GetCartByUserId(int userId)
+        {
+
+            var loggedUserId = UserHelper.GetUserId(User);
+
+            if (loggedUserId == null)
+            {
+                return Unauthorized("Usuário não autenticado.");
+            }
+
+            // Garante que o usuário autenticado só pode ver o próprio carrinho
+            if (loggedUserId != userId)
+            {
+                return Forbid("Você não tem permissão para acessar o carrinho de outro usuário.");
+            }
+
+            // Busca o carrinho do usuário
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Lunchbox)
+                .Include(c => c.CartItems)
+                .ThenInclude(ci => ci.Kit)
+                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
+
+            if (cart == null)
+            {
+                return NotFound("Carrinho não encontrado");
+            }
+
+            // Monta o DTO
             var response = new CartDto
             {
                 Id = cart.Id,

@@ -1,4 +1,3 @@
-using Google.Apis.Auth;
 using MarmitaBackend.Configurations;
 using MarmitaBackend.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -17,9 +16,10 @@ namespace MarmitaBackend
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            //GoogleAuth
-            builder.Services.Configure<GoogleAuthSettings>(
-            builder.Configuration.GetSection("Authentication:Google"));
+            //Configurar cultura padrao para en-US (ponto como separador decimal)
+            var defaultCulture = new CultureInfo("en-US");
+            CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
 
             // Add services to the container
             builder.Services.AddControllers();
@@ -88,6 +88,15 @@ namespace MarmitaBackend
 
 
             var app = builder.Build();
+
+            // Middleware de cultura
+            var supportedCultures = new[] { new CultureInfo("en-US") };
+            app.UseRequestLocalization(new RequestLocalizationOptions
+            {
+                DefaultRequestCulture = new RequestCulture("en-US"),
+                SupportedCultures = supportedCultures,
+                SupportedUICultures = supportedCultures
+            });
 
             app.UseStaticFiles();
             app.UseCors("AllowAll");

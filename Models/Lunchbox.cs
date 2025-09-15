@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.Build.Framework;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using RequiredAttribute = System.ComponentModel.DataAnnotations.RequiredAttribute;
 
 
@@ -16,6 +17,7 @@ namespace MarmitaBackend.Models
         public string Description { get; set; }
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero.")]
+        [Column(TypeName = "decimal(10,2)")] // precisão total 10, 2 casas decimais
         public decimal Price { get; set; }
         [Required]
         public string ImageUrl { get; set; } = string.Empty;

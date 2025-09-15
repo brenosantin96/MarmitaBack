@@ -16,6 +16,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Kit> Kits { get; set; }
     public DbSet<KitLunchbox> KitLunchboxes { get; set; }
     public DbSet<Order> Orders { get; set; }
+    public DbSet<MarmitaBackend.Models.DeliveryInfo> DeliveryInfo { get; set; } = default!;
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,11 +33,18 @@ public class ApplicationDbContext : DbContext
     .WithMany(u => u.Addresses)
     .HasForeignKey(a => a.UserId);
 
+        modelBuilder.Entity<Lunchbox>()
+            .Property(i => i.Price)
+            .HasColumnType("decimal(10,2)");
+
+        modelBuilder.Entity<Kit>()
+           .Property(i => i.Price)
+           .HasColumnType("decimal(10,2)");
+
 
 
     }
 
-    public DbSet<MarmitaBackend.Models.DeliveryInfo> DeliveryInfo { get; set; } = default!;
 
 
 
