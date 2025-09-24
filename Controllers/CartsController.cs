@@ -119,6 +119,140 @@ namespace MarmitaBackend.Controllers
 
         }
 
+        // POST: api/Carts/create
+        [Authorize]
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateCart()
+        {
+            var userId = UserHelper.GetUserId(User);
+
+            if (userId == null)
+                return Unauthorized("Usuário não autenticado.");
+
+            // Busca o carrinho do usuário (não finalizado)
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Kit)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Lunchbox)
+                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
+
+            bool created = false;
+
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    UserId = userId.Value,
+                    CreatedAt = DateTime.UtcNow,
+                    IsCheckedOut = false,
+                    CartItems = new List<CartItem>()
+                };
+                _context.Carts.Add(cart);
+                await _context.SaveChangesAsync();
+                created = true;
+            }
+
+            // Criar o DTO de resposta
+            var response = new CartDto
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                CreatedAt = cart.CreatedAt,
+                Items = cart.CartItems.Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.Id,
+                    Quantity = ci.Quantity,
+                    KitId = ci.KitId,
+                    LunchboxId = ci.LunchboxId,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList(),
+                isCheckedOut = cart.IsCheckedOut
+            };
+
+            if (created)
+                return CreatedAtAction(nameof(CreateCart), new { id = cart.Id }, response);
+
+            return Ok(response);
+        }
+
+        // POST: api/Carts/create2
+        [Authorize]
+        [HttpPost("create2")]
+        public async Task<IActionResult> CreateCartWithItems([FromBody] CreateCartDto createCartDto)
+        {
+            var userId = UserHelper.GetUserId(User); // valida usuário
+
+            if (userId == null)
+                return Unauthorized("Usuário não autenticado.");
+
+            // pega carrinho não finalizado, já trazendo Lunchbox e Kit
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Lunchbox)
+                .Include(c => c.CartItems)
+                    .ThenInclude(ci => ci.Kit)
+                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
+
+            bool created = false;
+
+            if (cart == null)
+            {
+                cart = new Cart
+                {
+                    UserId = userId.Value,
+                    CreatedAt = createCartDto.CreatedAt,
+                    IsCheckedOut = createCartDto.isCheckedOut,
+                    CartItems = createCartDto.Items.Select(i => new CartItem
+                    {
+                        Quantity = i.Quantity,
+                        LunchboxId = i.LunchboxId,
+                        KitId = i.KitId
+                    }).ToList()
+                };
+
+                _context.Carts.Add(cart);
+                await _context.SaveChangesAsync();
+                created = true;
+            }
+            else
+            {
+                cart.CartItems.Clear();
+                foreach (var item in createCartDto.Items)
+                {
+                    cart.CartItems.Add(new CartItem
+                    {
+                        Quantity = item.Quantity,
+                        LunchboxId = item.LunchboxId,
+                        KitId = item.KitId
+                    });
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            var response = new CartDto
+            {
+                Id = cart.Id,
+                UserId = cart.UserId,
+                CreatedAt = cart.CreatedAt,
+                isCheckedOut = cart.IsCheckedOut,
+                Items = cart.CartItems.Select(ci => new CartItemDto
+                {
+                    CartItemId = ci.Id,
+                    Quantity = ci.Quantity,
+                    KitId = ci.KitId,
+                    LunchboxId = ci.LunchboxId,
+                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                }).ToList()
+            };
+
+            if (created)
+                return CreatedAtAction(nameof(CreateCartWithItems), new { id = cart.Id }, response);
+
+            return Ok(response);
+        }
+
+
 
         // POST: api/Carts
         [Authorize]
