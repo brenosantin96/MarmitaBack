@@ -52,13 +52,17 @@ namespace MarmitaBackend.Controllers
                 Id = cart.Id,
                 UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
-                Items = cart.CartItems.Select(ci => new CartItemDto
+                CartItems = cart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     LunchboxId = ci.LunchboxId,
                     KitId = ci.KitId,
                     Quantity = ci.Quantity,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name,
+                    ImageUrl = ci.Kit?.ImageUrl ?? ci.Lunchbox?.ImageUrl,
+                    PortionGram = ci.Lunchbox?.PortionGram,
+                    Price = ci.Kit?.Price ?? ci.Lunchbox?.Price,
+
                 }).ToList(),
                 isCheckedOut = cart.IsCheckedOut
             };
@@ -104,13 +108,18 @@ namespace MarmitaBackend.Controllers
                 Id = cart.Id,
                 UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
-                Items = cart.CartItems.Select(ci => new CartItemDto
+                CartItems = cart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     LunchboxId = ci.LunchboxId,
                     KitId = ci.KitId,
                     Quantity = ci.Quantity,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name,
+                    ImageUrl = ci.Kit?.ImageUrl ?? ci.Lunchbox?.ImageUrl,
+                    PortionGram = ci.Lunchbox?.PortionGram,
+                    Price = ci.Kit?.Price ?? ci.Lunchbox?.Price
+                    
+
                 }).ToList(),
                 isCheckedOut = cart.IsCheckedOut
             };
@@ -119,62 +128,7 @@ namespace MarmitaBackend.Controllers
 
         }
 
-        // POST: api/Carts/create
-        [Authorize]
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateCart()
-        {
-            var userId = UserHelper.GetUserId(User);
-
-            if (userId == null)
-                return Unauthorized("Usuário não autenticado.");
-
-            // Busca o carrinho do usuário (não finalizado)
-            var cart = await _context.Carts
-                .Include(c => c.CartItems)
-                    .ThenInclude(ci => ci.Kit)
-                .Include(c => c.CartItems)
-                    .ThenInclude(ci => ci.Lunchbox)
-                .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
-
-            bool created = false;
-
-            if (cart == null)
-            {
-                cart = new Cart
-                {
-                    UserId = userId.Value,
-                    CreatedAt = DateTime.UtcNow,
-                    IsCheckedOut = false,
-                    CartItems = new List<CartItem>()
-                };
-                _context.Carts.Add(cart);
-                await _context.SaveChangesAsync();
-                created = true;
-            }
-
-            // Criar o DTO de resposta
-            var response = new CartDto
-            {
-                Id = cart.Id,
-                UserId = cart.UserId,
-                CreatedAt = cart.CreatedAt,
-                Items = cart.CartItems.Select(ci => new CartItemDto
-                {
-                    CartItemId = ci.Id,
-                    Quantity = ci.Quantity,
-                    KitId = ci.KitId,
-                    LunchboxId = ci.LunchboxId,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
-                }).ToList(),
-                isCheckedOut = cart.IsCheckedOut
-            };
-
-            if (created)
-                return CreatedAtAction(nameof(CreateCart), new { id = cart.Id }, response);
-
-            return Ok(response);
-        }
+       
 
         // POST: api/Carts/create2
         [Authorize]
@@ -186,7 +140,6 @@ namespace MarmitaBackend.Controllers
             if (userId == null)
                 return Unauthorized("Usuário não autenticado.");
 
-            // pega carrinho não finalizado, já trazendo Lunchbox e Kit
             var cart = await _context.Carts
                 .Include(c => c.CartItems)
                     .ThenInclude(ci => ci.Lunchbox)
@@ -203,7 +156,7 @@ namespace MarmitaBackend.Controllers
                     UserId = userId.Value,
                     CreatedAt = createCartDto.CreatedAt,
                     IsCheckedOut = createCartDto.isCheckedOut,
-                    CartItems = createCartDto.Items.Select(i => new CartItem
+                    CartItems = createCartDto.CartItems.Select(i => new CartItem
                     {
                         Quantity = i.Quantity,
                         LunchboxId = i.LunchboxId,
@@ -213,12 +166,21 @@ namespace MarmitaBackend.Controllers
 
                 _context.Carts.Add(cart);
                 await _context.SaveChangesAsync();
+
+                // recarrega o carrinho com relacionamentos
+                cart = await _context.Carts
+                    .Include(c => c.CartItems)
+                        .ThenInclude(ci => ci.Lunchbox)
+                    .Include(c => c.CartItems)
+                        .ThenInclude(ci => ci.Kit)
+                    .FirstOrDefaultAsync(c => c.Id == cart.Id);
+
                 created = true;
             }
             else
             {
                 cart.CartItems.Clear();
-                foreach (var item in createCartDto.Items)
+                foreach (var item in createCartDto.CartItems)
                 {
                     cart.CartItems.Add(new CartItem
                     {
@@ -228,6 +190,14 @@ namespace MarmitaBackend.Controllers
                     });
                 }
                 await _context.SaveChangesAsync();
+
+                // recarrega o carrinho atualizado
+                cart = await _context.Carts
+                    .Include(c => c.CartItems)
+                        .ThenInclude(ci => ci.Lunchbox)
+                    .Include(c => c.CartItems)
+                        .ThenInclude(ci => ci.Kit)
+                    .FirstOrDefaultAsync(c => c.Id == cart.Id);
             }
 
             var response = new CartDto
@@ -236,13 +206,17 @@ namespace MarmitaBackend.Controllers
                 UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
                 isCheckedOut = cart.IsCheckedOut,
-                Items = cart.CartItems.Select(ci => new CartItemDto
+                CartItems = cart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     Quantity = ci.Quantity,
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name,
+                    ImageUrl = ci.Kit?.ImageUrl ?? ci.Lunchbox?.ImageUrl,
+                    PortionGram = ci.Lunchbox?.PortionGram,
+                    Price = ci.Kit?.Price ?? ci.Lunchbox?.Price
+
                 }).ToList()
             };
 
@@ -251,6 +225,7 @@ namespace MarmitaBackend.Controllers
 
             return Ok(response);
         }
+
 
 
 
@@ -322,13 +297,13 @@ namespace MarmitaBackend.Controllers
                 Id = cart.Id,
                 UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
-                Items = cart.CartItems.Select(ci => new CartItemDto
+                CartItems = cart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     Quantity = ci.Quantity,
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name
                 }).ToList(),
                 isCheckedOut = cart.IsCheckedOut
             };
@@ -377,13 +352,13 @@ namespace MarmitaBackend.Controllers
             {
                 Id = userCart.Id,
                 CreatedAt = userCart.CreatedAt,
-                Items = userCart.CartItems.Select(ci => new CartItemDto
+                CartItems = userCart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     Quantity = ci.Quantity,
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name
                 }).ToList(),
                 isCheckedOut = userCart.IsCheckedOut
             };
@@ -428,13 +403,13 @@ namespace MarmitaBackend.Controllers
                 Id = cart.Id,
                 UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
-                Items = cart.CartItems.Select(ci => new CartItemDto
+                CartItems = cart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     Quantity = ci.Quantity,
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name
                 }).ToList(),
                 isCheckedOut = cart.IsCheckedOut
             };
@@ -477,13 +452,13 @@ namespace MarmitaBackend.Controllers
                 Id = userCart.Id,
                 UserId = userCart.UserId,
                 CreatedAt = userCart.CreatedAt,
-                Items = userCart.CartItems.Select(ci => new CartItemDto
+                CartItems = userCart.CartItems.Select(ci => new CartItemDto
                 {
-                    CartItemId = ci.Id,
+                    Id = ci.Id,
                     Quantity = ci.Quantity,
                     KitId = ci.KitId,
                     LunchboxId = ci.LunchboxId,
-                    ProductName = ci.Kit?.Name ?? ci.Lunchbox?.Name
+                    Name = ci.Kit?.Name ?? ci.Lunchbox?.Name
                 }).ToList(),
                 isCheckedOut = userCart.IsCheckedOut
             };
@@ -509,4 +484,69 @@ namespace MarmitaBackend.Controllers
         }
 
     }
+
+
+
+    /* CREATE ja nao estou utilizando.
+
+       // POST: api/Carts/create
+       [Authorize]
+       [HttpPost("create")]
+       public async Task<IActionResult> CreateCart()
+       {
+           var userId = UserHelper.GetUserId(User);
+
+           if (userId == null)
+               return Unauthorized("Usuário não autenticado.");
+
+           // Busca o carrinho do usuário (não finalizado)
+           var cart = await _context.Carts
+               .Include(c => c.CartItems)
+                   .ThenInclude(ci => ci.Kit)
+               .Include(c => c.CartItems)
+                   .ThenInclude(ci => ci.Lunchbox)
+               .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
+
+           bool created = false;
+
+           if (cart == null)
+           {
+               cart = new Cart
+               {
+                   UserId = userId.Value,
+                   CreatedAt = DateTime.UtcNow,
+                   IsCheckedOut = false,
+                   CartItems = new List<CartItem>()
+               };
+               _context.Carts.Add(cart);
+               await _context.SaveChangesAsync();
+               created = true;
+           }
+
+           // Criar o DTO de resposta
+           var response = new CartDto
+           {
+               Id = cart.Id,
+               UserId = cart.UserId,
+               CreatedAt = cart.CreatedAt,
+               CartItems = cart.CartItems.Select(ci => new CartItemDto
+               {
+                   Id = ci.Id,
+                   Quantity = ci.Quantity,
+                   KitId = ci.KitId,
+                   LunchboxId = ci.LunchboxId,
+                   Name = ci.Kit?.Name ?? ci.Lunchbox?.Name
+               }).ToList(),
+               isCheckedOut = cart.IsCheckedOut
+           };
+
+           if (created)
+               return CreatedAtAction(nameof(CreateCart), new { id = cart.Id }, response);
+
+           return Ok(response);
+       }
+
+       */
+
+
 }
