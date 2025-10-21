@@ -1,4 +1,4 @@
-﻿namespace MarmitaBackend.Models
+﻿namespace MarmitaBackend.DTOs
 {
     public class AddToCartRequest
     {
