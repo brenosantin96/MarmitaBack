@@ -16,6 +16,12 @@ namespace MarmitaBackend
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.WebHost.ConfigureKestrel(options =>
+            {
+                options.ListenAnyIP(7192); // Escuta todas as interfaces na porta 7192
+            });
+
+
             //Configurar cultura padrao para en-US (ponto como separador decimal)
             var defaultCulture = new CultureInfo("en-US");
             CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
@@ -49,13 +55,19 @@ namespace MarmitaBackend
             //cors
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
+                options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
+                    policy
+                        .WithOrigins(
+                            "http://localhost:3000",      // Frontend rodando localmente no mesmo PC
+                            "http://192.168.1.130:3000"   // Frontend acessando de outro dispositivo na rede local
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials(); // necessário se você usar withCredentials: true
                 });
             });
+
 
 
             //adding authentication and configuring JWT
@@ -99,7 +111,7 @@ namespace MarmitaBackend
             });
 
             app.UseStaticFiles();
-            app.UseCors("AllowAll");
+            app.UseCors("AllowFrontend");
             app.UseAuthentication(); // Enable authentication middleware
             app.UseAuthorization();
 
@@ -110,7 +122,7 @@ namespace MarmitaBackend
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection(); descomentar para funcionar o https.
 
             app.MapControllers();
 
