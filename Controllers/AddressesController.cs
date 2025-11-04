@@ -78,7 +78,7 @@ namespace MarmitaBackend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutAddress(int id, Address address)
         {
-         
+
 
             var existingAddress = await _context.Addresses.FindAsync(id);
             if (existingAddress == null)
@@ -101,7 +101,7 @@ namespace MarmitaBackend.Controllers
             existingAddress.Number = address.Number;
             existingAddress.Complement = address.Complement;
             existingAddress.UpdatedAt = DateTime.UtcNow; // Update the timestamp
-            
+
 
 
             try
@@ -126,7 +126,7 @@ namespace MarmitaBackend.Controllers
             address.UpdatedAt = DateTime.UtcNow; // Set the update timestamp
             _context.Addresses.Add(address);
             await _context.SaveChangesAsync();
-            
+
 
             return CreatedAtAction("GetAddress", new { id = address.Id }, address);
         }
@@ -136,14 +136,32 @@ namespace MarmitaBackend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAddress(int id)
         {
-            var address = await _context.Addresses.FindAsync(id);
-            if (address == null)
+            try
             {
-                return NotFound();
+
+                var loggedUserId = UserHelper.GetUserId(User);
+
+                var address = await _context.Addresses.FindAsync(id);
+
+                if (address == null)
+                {
+                    return NotFound();
+                }
+
+                if (address.UserId != loggedUserId)
+                {
+                    return BadRequest("Você não tem permissão para deletar endereços de outro usuario.");
+                }
+
+
+                _context.Addresses.Remove(address);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao salvar no banco: {ex.Message}");
             }
 
-            _context.Addresses.Remove(address);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
