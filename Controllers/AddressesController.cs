@@ -30,6 +30,18 @@ namespace MarmitaBackend.Controllers
             return await _context.Addresses.ToListAsync();
         }
 
+        // GET: api/Addresses/admin/all
+        [HttpGet("admin/all")]
+        public async Task<ActionResult<IEnumerable<Address>>> GetAdminAddresses()
+        {
+            var adminAddresses = await _context.Addresses
+                .Include(a => a.User)
+                .Where(a => a.User.isAdmin == true)
+                .ToListAsync();
+
+            return Ok(adminAddresses);
+        }
+
         // GET: api/Addresses/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Address>> GetAddress(int id)
