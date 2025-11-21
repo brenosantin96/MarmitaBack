@@ -153,6 +153,14 @@ namespace MarmitaBackend.Controllers
 
                 var loggedUserId = UserHelper.GetUserId(User);
 
+                var loggedUser = await _context.Users.FindAsync(loggedUserId);
+
+                if (loggedUser == null) {
+                    return Unauthorized("Usuário não encontrado");
+                }
+
+                var isUserAdmin = loggedUser.isAdmin;
+
                 var address = await _context.Addresses.FindAsync(id);
 
                 if (address == null)
@@ -160,7 +168,8 @@ namespace MarmitaBackend.Controllers
                     return NotFound();
                 }
 
-                if (address.UserId != loggedUserId)
+
+                if (!isUserAdmin && address.UserId != loggedUserId)
                 {
                     return BadRequest("Você não tem permissão para deletar endereços de outro usuario.");
                 }
