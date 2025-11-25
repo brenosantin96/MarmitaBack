@@ -8,8 +8,16 @@ namespace MarmitaBackend.Models
     public class Kit
     {
         public int Id { get; set; }
+
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
+
+
         public string Name { get; set; }
         public string Description { get; set; }
+
+
         [Required]
         [Range(0.01, double.MaxValue, ErrorMessage = "O preço deve ser maior que zero.")]
         [Column(TypeName = "decimal(10,2)")] // precisão total 10, 2 casas decimais

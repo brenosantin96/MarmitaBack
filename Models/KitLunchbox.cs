@@ -4,6 +4,11 @@
     {
         public int Id { get; set; }
 
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
+
+
         public int KitId { get; set; }
         public Kit Kit { get; set; }
 

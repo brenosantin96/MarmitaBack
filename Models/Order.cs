@@ -7,6 +7,12 @@ namespace MarmitaBackend.Models
     public class Order
     {
         public int Id { get; set; }
+
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
+
+
         public int CartId { get; set; }
         [JsonIgnore]
         [ValidateNever]

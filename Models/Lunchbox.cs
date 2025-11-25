@@ -11,6 +11,12 @@ namespace MarmitaBackend.Models
     public class Lunchbox
     {
         public int Id { get; set; }
+
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
+
+
         [Required]
         public string Name { get; set; }
         [Required]

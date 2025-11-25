@@ -6,6 +6,12 @@ namespace MarmitaBackend.Models
     public class DeliveryInfo
     {
         public int Id { get; set; }
+
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
+
+
         public int UserId { get; set; }
 
         [JsonIgnore]

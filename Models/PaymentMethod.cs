@@ -4,6 +4,11 @@
     {
         public int Id { get; set; }
 
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
+
+
         // Nome visível para o usuário (ex: "PIX", "Cartão de Crédito")
         public string Name { get; set; } = null!;
 

@@ -101,6 +101,8 @@ namespace MarmitaBackend
 
             var app = builder.Build();
 
+            app.UseMiddleware<ExtractTenantMiddleware>();
+
             // Middleware de cultura
             var supportedCultures = new[] { new CultureInfo("en-US") };
             app.UseRequestLocalization(new RequestLocalizationOptions

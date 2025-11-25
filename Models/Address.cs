@@ -6,8 +6,12 @@ namespace MarmitaBackend.Models
     public class Address
     {
         public int Id { get; set; }
+
+        public int TenantId { get; set; }
+        public Tenant Tenant { get; set; } = null!;
+
         public int UserId { get; set; }
-        
+
         [JsonIgnore]
         [ValidateNever]
         public User User { get; set; } = null!;
