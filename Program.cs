@@ -1,4 +1,5 @@
 using MarmitaBackend.Configurations;
+using MarmitaBackend.Provider;
 using MarmitaBackend.Utils;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Localization;
@@ -30,7 +31,12 @@ namespace MarmitaBackend
             // Add services to the container
             builder.Services.AddControllers();
 
+            //aplicando scoped DI requisicao web.
+            builder.Services.AddHttpContextAccessor();            // Necessário para acessar HttpContext
+            builder.Services.AddScoped<ITenantProvider, TenantProvider>(); // Um TenantProvider por request
+
             //Adding connection string to the database
+            // ja estou usando DI do TenantProvider dentro do ApplicationDbContext.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
                 ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
@@ -41,34 +47,10 @@ namespace MarmitaBackend
             {
                 throw new InvalidOperationException("JWT configuration is missing or invalid.");
             }
+
             // Register the JwtConfig as a singleton service
             builder.Services.AddSingleton(jwtConfig); // você já tem esse objeto criado antes
-
-            // Convert the JWT key from string to byte array
-            var key = Encoding.ASCII.GetBytes(jwtConfig.Key);
-
-
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
-            //cors
-            builder.Services.AddCors(options =>
-            {
-                options.AddPolicy("AllowFrontend", policy =>
-                {
-                    policy
-                        .WithOrigins(
-                            "http://localhost:3000",      // Frontend rodando localmente no mesmo PC
-                            "http://192.168.1.130:3000"   // Frontend acessando de outro dispositivo na rede local
-                        )
-                        .AllowAnyHeader()
-                        .AllowAnyMethod()
-                        .AllowCredentials(); // necessário se você usar withCredentials: true
-                });
-            });
-
-
+            var key = Encoding.ASCII.GetBytes(jwtConfig.Key);  // Convert the JWT key from string to byte array
 
             //adding authentication and configuring JWT
             builder.Services.AddAuthentication(options =>
@@ -98,9 +80,29 @@ namespace MarmitaBackend
                 });
 
 
+            //swagger
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
+            //cors
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:3000",      // Frontend rodando localmente no mesmo PC
+                            "http://192.168.1.130:3000"   // Frontend acessando de outro dispositivo na rede local
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials(); // necessário se você usar withCredentials: true
+                });
+            });
 
             var app = builder.Build();
 
+            //  INSERE O MIDDLEWARE MULTITENANT AQUI, vai rodar antes de tudo
             app.UseMiddleware<ExtractTenantMiddleware>();
 
             // Middleware de cultura

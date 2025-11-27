@@ -2,6 +2,7 @@
 using MarmitaBackend.Configurations;
 using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
+using MarmitaBackend.Provider;
 using MarmitaBackend.Utils;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -30,22 +31,29 @@ namespace MarmitaBackend.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly JwtConfig _jwtConfig;
+        private readonly ITenantProvider _tenantProvider;
 
 
-        public UsersController(ApplicationDbContext context, IConfiguration configuration, JwtConfig jwtConfig)
+        public UsersController(ApplicationDbContext context, IConfiguration configuration, JwtConfig jwtConfig, ITenantProvider tenantProvider)
         {
             _context = context;
             _configuration = configuration;
             _jwtConfig = jwtConfig;
+            _tenantProvider = tenantProvider;
 
         }
 
 
         [Route("register")]
         [HttpPost]
-        public IActionResult Register([FromBody] User user)
+        public IActionResult Register([FromBody] RegisterDto dto)
         {
-            if (user == null)
+
+            Console.WriteLine($"TenantProvider.TenantId = {_tenantProvider.TenantId}");
+
+
+
+            if (dto == null)
             {
                 return BadRequest("Invalid user.");
             }
@@ -55,12 +63,20 @@ namespace MarmitaBackend.Controllers
                 return BadRequest(ModelState); // Retorna os erros de validação
             }
 
-            var emailExists = _context.Users.Any((u) => u.Email == user.Email);
+            var emailExists = _context.Users.Any((u) => u.Email == dto.Email);
 
             if (emailExists)
             {
                 return BadRequest(new { message = "User with this email already exists" });
             }
+
+            var user = new User
+            {
+                Name = dto.Name,
+                Email = dto.Email,
+                Password = dto.Password,
+                TenantId = _tenantProvider.TenantId // <<< AUTOMÁTICO
+            };
 
             _context.Add(user);
             _context.SaveChanges();

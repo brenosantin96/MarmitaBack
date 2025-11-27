@@ -35,7 +35,7 @@ public class ApplicationDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         // Filtro Global para MultiTenant
-        var tenantId = _tenantProvider.TenantId;
+        var tenantId = _tenantProvider.TenantId; 
 
         modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == tenantId);
         modelBuilder.Entity<Address>().HasQueryFilter(e => e.TenantId == tenantId);
@@ -62,7 +62,7 @@ public class ApplicationDbContext : DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         //Lunchbox.Preco precisao
-        modelBuilder.Entity<Lunchbox>()
+        modelBuilder.Entity<Lunchbox>() 
             .Property(i => i.Price)
             .HasColumnType("decimal(10,2)");
 
