@@ -75,7 +75,7 @@ namespace MarmitaBackend.Controllers
                 Name = dto.Name,
                 Email = dto.Email,
                 Password = dto.Password,
-                TenantId = _tenantProvider.TenantId // <<< AUTOMÁTICO
+                TenantId = _tenantProvider.TenantId 
             };
 
             _context.Add(user);
@@ -123,20 +123,24 @@ namespace MarmitaBackend.Controllers
         [HttpPost("google-login")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
         {
-
             try
             {
+                // TENANT MULTITENANT
+                int tenantId = _tenantProvider.TenantId;
+                
+                Console.WriteLine($"[GoogleLogin] Tenant atual = {tenantId}");
 
                 using var client = new HttpClient();
 
                 var values = new Dictionary<string, string>
-                {
-                    {"code", dto.Code},
-                    {"client_id", Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")},
-                    {"client_secret", Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET") },
-                    { "redirect_uri", "http://localhost:3000" }, // precisa ser o mesmo usado no front
-                    { "grant_type", "authorization_code" }
-                };
+        {
+            { "code", dto.Code },
+            { "client_id", dto.ClientId },
+            { "client_secret", dto.ClientSecret },
+            { "redirect_uri", dto.RedirectUri },
+            { "grant_type", "authorization_code" }
+        };
+
 
                 var content = new FormUrlEncodedContent(values);
                 var response = await client.PostAsync("https://oauth2.googleapis.com/token", content);
@@ -144,25 +148,28 @@ namespace MarmitaBackend.Controllers
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return Unauthorized(new { message = "Erro ao trocar code por token", error = responseString });
+                    return Unauthorized(new
+                    {
+                        message = "Erro ao trocar code por token",
+                        error = responseString
+                    });
                 }
 
                 var tokenData = JsonConvert.DeserializeObject<dynamic>(responseString);
-                Console.WriteLine($"responseString: {responseString}");
-                Console.WriteLine($"TOKEN DATA: {tokenData}");
-
                 string idToken = tokenData.id_token;
 
-                // Validar ID Token
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
-                    Audience = new List<string> { "486411282466-hki87kvtqucbgvgk964h91c2tpnvi6j0.apps.googleusercontent.com" }
+                    Audience = new List<string> { dto.ClientId }
                 };
 
                 var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
 
-                //payload vai ter email, name, picture etc, buscar esse usuario no banco e se nao existir, criarlo.
-                var user = _context.Users.FirstOrDefault(u => u.Email == payload.Email);
+                // MULTITENANT:
+                // Agora o filtro global garante que só busque NO TENANT ATUAL
+                var user = await _context
+                    .Users
+                    .FirstOrDefaultAsync(u => u.Email == payload.Email);
 
                 if (user == null)
                 {
@@ -171,7 +178,8 @@ namespace MarmitaBackend.Controllers
                         Email = payload.Email,
                         Name = payload.Name,
                         Password = null,
-                        isAdmin = false
+                        isAdmin = false,
+                        TenantId = tenantId  // ⬅ MULTITENANT OK
                     };
 
                     _context.Users.Add(user);
@@ -191,14 +199,17 @@ namespace MarmitaBackend.Controllers
                         user.isAdmin
                     }
                 });
-
             }
             catch (Exception ex)
             {
-                return Unauthorized(new { message = "Token inválido", error = ex.Message });
-
+                return Unauthorized(new
+                {
+                    message = "Token inválido",
+                    error = ex.Message
+                });
             }
         }
+
 
         [HttpGet]
         [Route("me")]

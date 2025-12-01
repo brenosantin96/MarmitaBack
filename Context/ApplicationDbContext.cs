@@ -1,20 +1,21 @@
 ﻿using MarmitaBackend.Models;
 using MarmitaBackend.Provider;
-using Microsoft.EntityFrameworkCore; // 👈 ESSENCIAL!
+using Microsoft.EntityFrameworkCore;
 
 public class ApplicationDbContext : DbContext
 {
     private readonly ITenantProvider _tenantProvider;
 
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,
+    public ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
         ITenantProvider tenantProvider
-)
+    )
         : base(options)
     {
         _tenantProvider = tenantProvider;
     }
 
-
+    // DbSets
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<User> Users { get; set; }
     public DbSet<Address> Addresses { get; set; }
@@ -28,51 +29,52 @@ public class ApplicationDbContext : DbContext
     public DbSet<DeliveryInfo> DeliveryInfo { get; set; }
     public DbSet<PaymentMethod> PaymentMethods { get; set; }
 
-
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        // Filtro Global para MultiTenant
-        var tenantId = _tenantProvider.TenantId; 
+        // ===========================
+        // GLOBAL QUERY FILTERS
+        // ===========================
+        // NÃO PEGUE TenantId AQUI DIRETAMENTE
+        // O valor precisa ser buscado em tempo de execução
+        modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<Address>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<Cart>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<CartItem>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<Category>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<Lunchbox>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<Kit>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<KitLunchbox>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<Order>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<DeliveryInfo>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
+        modelBuilder.Entity<PaymentMethod>().HasQueryFilter(e => e.TenantId == _tenantProvider.TenantId);
 
-        modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Address>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Cart>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<CartItem>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Category>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Lunchbox>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Kit>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<KitLunchbox>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Order>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<DeliveryInfo>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<PaymentMethod>().HasQueryFilter(e => e.TenantId == tenantId);
-
-        //UNIQUE EMAIL POR TENANT (super importante!)
+        // ===========================
+        // UNIQUE EMAIL POR TENANT
+        // ===========================
         modelBuilder.Entity<User>()
             .HasIndex(u => new { u.Email, u.TenantId })
             .IsUnique();
 
-        // Relacionamento Address > User
+        // ===========================
+        // RELACIONAMENTO ADDRESS → USER
+        // ===========================
         modelBuilder.Entity<Address>()
             .HasOne(a => a.User)
             .WithMany(u => u.Addresses)
             .HasForeignKey(a => a.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        //Lunchbox.Preco precisao
-        modelBuilder.Entity<Lunchbox>() 
+        // ===========================
+        // PRECISÃO DECIMAL
+        // ===========================
+        modelBuilder.Entity<Lunchbox>()
             .Property(i => i.Price)
             .HasColumnType("decimal(10,2)");
 
-        // Kit.Preço
         modelBuilder.Entity<Kit>()
             .Property(i => i.Price)
             .HasColumnType("decimal(10,2)");
     }
-
-
-
-
 }

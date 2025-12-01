@@ -33,6 +33,8 @@ namespace MarmitaBackend
 
             //aplicando scoped DI requisicao web.
             builder.Services.AddHttpContextAccessor();            // Necessário para acessar HttpContext
+            builder.Services.AddScoped<TenantAccessor>();
+
             builder.Services.AddScoped<ITenantProvider, TenantProvider>(); // Um TenantProvider por request
 
             //Adding connection string to the database
