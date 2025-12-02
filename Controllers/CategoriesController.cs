@@ -1,11 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using MarmitaBackend.Models;
+using MarmitaBackend.Provider;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MarmitaBackend.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace MarmitaBackend.Controllers
 {
@@ -14,24 +15,26 @@ namespace MarmitaBackend.Controllers
     public class CategoriesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly ITenantProvider _tenantProvider;
 
-        public CategoriesController(ApplicationDbContext context)
+        public CategoriesController(ApplicationDbContext context, ITenantProvider tenantProvider)
         {
             _context = context;
+            _tenantProvider = tenantProvider;
         }
 
         // GET: api/Categories
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Category>>> GetCategories()
         {
-            return await _context.Categories.ToListAsync();
+            return await _context.Categories.Where(c => c.TenantId == _tenantProvider.TenantId).ToListAsync();
         }
 
         // GET: api/Categories/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Category>> GetCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _context.Categories.Where(c => c.Id == id && c.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
 
             if (category == null)
             {
@@ -46,16 +49,17 @@ namespace MarmitaBackend.Controllers
         public async Task<IActionResult> PutCategory(int id, Category category)
         {
 
-            var existingCategory = await _context.Categories.FindAsync(id);
+            var existingCategory = await _context.Categories
+    .FirstOrDefaultAsync(c => c.Id == id && c.TenantId == _tenantProvider.TenantId);
 
-            if(existingCategory == null)
+            if (existingCategory == null)
             {
                 return NotFound("Category not found.");
             }
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); 
+                return BadRequest(ModelState);
             }
 
             //applying changes
@@ -70,6 +74,9 @@ namespace MarmitaBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<Category>> PostCategory(Category category)
         {
+
+            category.TenantId = _tenantProvider.TenantId;
+
             _context.Categories.Add(category);
             await _context.SaveChangesAsync();
 
@@ -80,7 +87,7 @@ namespace MarmitaBackend.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var category = await _context.Categories.FindAsync(id);
+            var category = await _context.Categories.Where(c => c.Id == id && c.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
             if (category == null)
             {
                 return NotFound();

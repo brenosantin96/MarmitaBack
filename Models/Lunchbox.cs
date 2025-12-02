@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.Build.Framework;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 using RequiredAttribute = System.ComponentModel.DataAnnotations.RequiredAttribute;
 
 
@@ -13,6 +14,8 @@ namespace MarmitaBackend.Models
         public int Id { get; set; }
 
         public int TenantId { get; set; }
+        [ValidateNever]
+        [JsonIgnore]
         public Tenant Tenant { get; set; } = null!;
 
 

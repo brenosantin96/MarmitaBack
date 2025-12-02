@@ -1,5 +1,7 @@
-﻿using MarmitaBackend.DTOs;
+﻿using Humanizer;
+using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
+using MarmitaBackend.Provider;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -16,24 +18,26 @@ namespace MarmitaBackend.Controllers
     public class LunchboxesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-
-        public LunchboxesController(ApplicationDbContext context)
+        private readonly ITenantProvider _tenantProvider;
+        public LunchboxesController(ApplicationDbContext context, ITenantProvider tenantProvider)
         {
             _context = context;
+            _tenantProvider = tenantProvider;
         }
 
         // GET: api/Lunchboxes
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Lunchbox>>> GetLunchboxes()
         {
-            return await _context.Lunchboxes.ToListAsync();
+            return await _context.Lunchboxes.Where(x => x.TenantId == _tenantProvider.TenantId).ToListAsync();
         }
 
         // GET: api/Lunchboxes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Lunchbox>> GetLunchbox(int id)
         {
-            var lunchbox = await _context.Lunchboxes.FindAsync(id);
+            var lunchbox = await _context.Lunchboxes.Where(l => l.Id == id && l.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
+
 
             if (lunchbox == null)
             {
@@ -43,45 +47,63 @@ namespace MarmitaBackend.Controllers
             return lunchbox;
         }
 
-        // PUT: api/Lunchboxes/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutLunchbox(int id, Lunchbox lunchbox)
+        // POST: api/LunchboxesWithImage
+        [HttpPost]
+        [Route("/api/LunchboxesWithImage")]
+        [Authorize]
+        public async Task<ActionResult<Lunchbox>> PostLunchboxWithImage([FromForm] LunchboxCreateDto dto)
         {
-            var existingLunchbox = await _context.Lunchboxes.FindAsync(id);
-
-            if (existingLunchbox == null)
+            if (dto == null)
             {
-                return NotFound("Lunchbox not found.");
+                return BadRequest("Lunchbox cannot be null.");
             }
 
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // validating [required], [range].
+                return BadRequest(ModelState);
             }
 
-            //verificando se categoria existe
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == lunchbox.CategoryId);
+            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
             if (!categoryExists)
             {
                 return BadRequest("Category does not exist.");
             }
 
-            // Atualiza os campos
+            //Saving image in server
+            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/lunchboxes");
+            if (!Directory.Exists(uploadsFolder))
+            {
+                Directory.CreateDirectory(uploadsFolder);
+            }
 
 
-            existingLunchbox.Name = lunchbox.Name;
-            existingLunchbox.Description = lunchbox.Description;
-            existingLunchbox.Price = lunchbox.Price;
-            existingLunchbox.PortionGram = lunchbox.PortionGram;
-            existingLunchbox.ImageUrl = lunchbox.ImageUrl;
-            existingLunchbox.CategoryId = lunchbox.CategoryId;
+            //creating uniqueName
+            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
+            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
+            Console.WriteLine($"UploadsFolder: {uploadsFolder} /n UniqueFileName: {uniqueFileName}");
 
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                await dto.Image.CopyToAsync(fileStream);
+            }
 
+            // 🔹 Criar objeto Lunchbox para salvar no banco
+            var lunchbox = new Lunchbox
+            {
+                Name = dto.Name,
+                Description = dto.Description,
+                Price = dto.Price,
+                PortionGram = dto.PortionGram,
+                CategoryId = dto.CategoryId,
+                ImageUrl = "/images/lunchboxes/" + uniqueFileName,
+                TenantId = _tenantProvider.TenantId
+            };
+
+            _context.Lunchboxes.Add(lunchbox);
             await _context.SaveChangesAsync();
 
-            return NoContent(); // padrão REST para updates
-
+            return CreatedAtAction("GetLunchbox", new { id = lunchbox.Id }, lunchbox);
 
         }
 
@@ -94,7 +116,7 @@ namespace MarmitaBackend.Controllers
             if (dto is null)
                 return BadRequest("No form data received.");
 
-            var existingLunchbox = await _context.Lunchboxes.FindAsync(id);
+            var existingLunchbox = await _context.Lunchboxes.Where(l => l.Id == id && l.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
             if (existingLunchbox == null)
                 return NotFound("Lunchbox not found.");
 
@@ -102,16 +124,31 @@ namespace MarmitaBackend.Controllers
                 return BadRequest(ModelState);
 
             // valida categoria
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
-            if (!categoryExists)
-                return BadRequest("Category does not exist.");
+            if (dto.CategoryId != null)
+            {
+                bool categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId && c.TenantId == _tenantProvider.TenantId);
+
+                if (!categoryExists)
+                    return BadRequest("Category does not exist.");
+
+            }
+
 
             // Atualiza campos básicos
-            existingLunchbox.Name = dto.Name;
-            existingLunchbox.Description = dto.Description;
-            existingLunchbox.Price = dto.Price;
-            existingLunchbox.CategoryId = dto.CategoryId;
-            existingLunchbox.PortionGram = dto.PortionGram;
+            if (dto.Name != null)
+                existingLunchbox.Name = dto.Name;
+
+            if (dto.Description != null)
+                existingLunchbox.Description = dto.Description;
+
+            if (dto.Price.HasValue)
+                existingLunchbox.Price = dto.Price.Value;
+
+            if (dto.PortionGram.HasValue)
+                existingLunchbox.PortionGram = dto.PortionGram.Value;
+
+            if (dto.CategoryId.HasValue)
+                existingLunchbox.CategoryId = dto.CategoryId.Value;
 
             // --- Processamento de imagem (opcional) ---
             // Fallback: se o binder não popular dto.Image, tenta pegar do Request.
@@ -164,106 +201,20 @@ namespace MarmitaBackend.Controllers
 
 
 
-        // POST: api/Lunchboxes
-        [HttpPost]
-        public async Task<ActionResult<Lunchbox>> PostLunchbox(Lunchbox lunchbox)
-        {
-            if (lunchbox == null)
-            {
-                return BadRequest("Lunchbox cannot be null.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState); // validating [required], [range].
-            }
-
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == lunchbox.CategoryId);
-            if (!categoryExists)
-            {
-                return BadRequest("Category does not exist.");
-            }
-
-            _context.Lunchboxes.Add(lunchbox);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetLunchbox", new { id = lunchbox.Id }, lunchbox);
-        }
-
-        // POST: api/LunchboxesWithImage
-        [HttpPost]
-        [Route("/api/LunchboxesWithImage")]
-        [Authorize]
-        public async Task<ActionResult<Lunchbox>> PostLunchboxWithImage([FromForm] LunchboxCreateDto dto)
-        {
-            if (dto == null)
-            {
-                return BadRequest("Lunchbox cannot be null.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId);
-            if (!categoryExists)
-            {
-                return BadRequest("Category does not exist.");
-            }
-
-            //Saving image in server
-            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/lunchboxes");
-            if (!Directory.Exists(uploadsFolder))
-            {
-                Directory.CreateDirectory(uploadsFolder);
-            }
-
-
-            //creating uniqueName
-            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            Console.WriteLine($"UploadsFolder: {uploadsFolder} /n UniqueFileName: {uniqueFileName}");
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                await dto.Image.CopyToAsync(fileStream);
-            }
-
-            // 🔹 Criar objeto Lunchbox para salvar no banco
-            var lunchbox = new Lunchbox
-            {
-                Name = dto.Name,
-                Description = dto.Description,
-                Price = dto.Price,
-                PortionGram = dto.PortionGram,
-                CategoryId = dto.CategoryId,
-                ImageUrl = "/images/lunchboxes/" + uniqueFileName
-            };
-
-            _context.Lunchboxes.Add(lunchbox);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetLunchbox", new { id = lunchbox.Id }, lunchbox);
-
-        }
-
-
-
 
         // DELETE: api/Lunchboxes/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLunchbox(int id)
         {
-            var lunchbox = await _context.Lunchboxes.FindAsync(id);
+            var lunchbox = await _context.Lunchboxes.Where(l => l.Id == id && l.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
+
             if (lunchbox == null)
             {
                 return NotFound();
             }
 
             //se existir algum cart com essa lunchboxId, nao vai excluir.
-            if (_context.CartItems.Any(c => c.LunchboxId == id))
+            if (_context.CartItems.Any(c => c.TenantId == _tenantProvider.TenantId && c.LunchboxId == id))
             {
                 return BadRequest(new { error = "Não é possível deletar, existem carrinhos usando essa lunchbox." });
             }
