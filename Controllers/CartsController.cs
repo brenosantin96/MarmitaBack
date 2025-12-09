@@ -131,6 +131,59 @@ namespace MarmitaBackend.Controllers
             }
         }
 
+        // GET: api/Carts/GetAllCartsByUserId/5
+        [Authorize]
+        [HttpGet("GetAllCartsByUserId/{userId}")]
+        public async Task<ActionResult<List<CartDto>>> GetAllCartsByUserId(int userId)
+        {
+            try
+            {
+                var loggedUserId = UserHelper.GetUserId(User);
+
+                if (loggedUserId == null)
+                    return Unauthorized("Usuário não autenticado.");
+
+                if (loggedUserId != userId)
+                    return StatusCode(403, "Você não tem permissão para acessar dados de outro usuário.");
+
+                var carts = await _context.Carts
+                    .Where(c => c.UserId == userId && c.TenantId == _tenantProvider.TenantId)
+                    .Include(c => c.CartItems)
+                        .ThenInclude(ci => ci.Lunchbox)
+                    .Include(c => c.CartItems)
+                        .ThenInclude(ci => ci.Kit)
+                    .OrderByDescending(c => c.CreatedAt)
+                    .ToListAsync();
+
+                if (!carts.Any())
+                    return NotFound("Nenhum carrinho encontrado para este usuário.");
+
+                var response = carts.Select(cart => new CartDto
+                {
+                    Id = cart.Id,
+                    UserId = cart.UserId,
+                    CreatedAt = cart.CreatedAt,
+                    isCheckedOut = cart.IsCheckedOut,
+                    CartItems = cart.CartItems.Select(ci => new CartItemDto
+                    {
+                        Id = ci.Id,
+                        Quantity = ci.Quantity,
+                        LunchboxId = ci.LunchboxId,
+                        KitId = ci.KitId,
+                        Name = ci.Kit?.Name ?? ci.Lunchbox?.Name,
+                        ImageUrl = ci.Kit?.ImageUrl ?? ci.Lunchbox?.ImageUrl,
+                        PortionGram = ci.Lunchbox?.PortionGram,
+                        Price = ci.Kit?.Price ?? ci.Lunchbox?.Price
+                    }).ToList()
+                }).ToList();
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro interno: {ex.Message}");
+            }
+        }
 
 
 

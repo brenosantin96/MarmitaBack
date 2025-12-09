@@ -1,12 +1,13 @@
 ﻿using MarmitaBackend.DTOs;
+using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
+using MarmitaBackend.Provider;
 using MarmitaBackend.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
-using MarmitaBackend.DTOs;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,20 +18,71 @@ namespace MarmitaBackend.Controllers
     [ApiController]
     public class OrdersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
 
-        public OrdersController(ApplicationDbContext context)
+        private readonly ApplicationDbContext _context;
+        private readonly ITenantProvider _tenantProvider;
+
+
+        public OrdersController(ApplicationDbContext context, ITenantProvider tenantProvider)
         {
             _context = context;
+            _tenantProvider = tenantProvider;
         }
 
-        // GET: api/Orders
-        // Esse método deve ser apenas para ADMINS, mudar depois
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        // GET: api/orders/all
+        [Authorize]
+        [HttpGet("all")]
+        public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders()
         {
-            return await _context.Orders.ToListAsync();
+            try
+            {
+                var loggedUserId = UserHelper.GetUserId(User);
+
+                bool isAdmin = await _context.Users
+                    .AnyAsync(u => u.Id == loggedUserId && u.isAdmin);
+
+                if (!isAdmin)
+                    return Unauthorized("Somente administradores podem listar pedidos.");
+
+                var orders = await _context.Orders
+                    .Where(o => o.TenantId == _tenantProvider.TenantId)
+                    .OrderByDescending(o => o.DeliveryInfo.DeliveryDate)
+                    .Select(o => new OrderDto
+                    {
+                        Id = o.Id,
+                        CartId = o.CartId,
+
+                        // mapeando o DeliveryInfo como objeto aninhado
+                        DeliveryInfo = new DeliveryInfoDto
+                        {
+                            Id = o.DeliveryInfo.Id,
+                            AddressId = o.DeliveryInfo.AddressId,
+                            UserId = o.DeliveryInfo.UserId,
+                            CanLeaveAtDoor = o.DeliveryInfo.CanLeaveAtDoor,
+                            DeliveryDate = o.DeliveryInfo.DeliveryDate,
+                            DeliveryPeriod = o.DeliveryInfo.DeliveryPeriod,
+                            DeliveryType = o.DeliveryInfo.DeliveryType
+                            
+                        },
+
+                        FullName = o.FullName,
+                        Phone = o.Phone,
+                        PaymentMethod = o.PaymentMethod.Name,
+                        Subtotal = o.Subtotal,
+                        DeliveryFee = o.DeliveryFee,
+                        Total = o.Total,
+                        CreatedAt = o.CreatedAt
+                    })
+                    .ToListAsync();
+
+                return Ok(orders);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
+
 
         // GET: api/Orders/5
         [HttpGet("{id}")]
@@ -111,9 +163,9 @@ namespace MarmitaBackend.Controllers
             return CreatedAtAction("GetOrder", new { id = createdOrder.Id }, orderDto);
 
 
-            
 
-            
+
+
         }
 
         // DELETE: api/Orders/5

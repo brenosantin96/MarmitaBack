@@ -88,7 +88,7 @@ namespace MarmitaBackend.Controllers
                 await dto.Image.CopyToAsync(fileStream);
             }
 
-            // 🔹 Criar objeto Lunchbox para salvar no banco
+            //Criar objeto Lunchbox para salvar no banco
             var lunchbox = new Lunchbox
             {
                 Name = dto.Name,
