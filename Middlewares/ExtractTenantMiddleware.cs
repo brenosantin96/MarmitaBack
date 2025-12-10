@@ -13,6 +13,17 @@ public class ExtractTenantMiddleware
 
     public async Task InvokeAsync(HttpContext context, TenantAccessor accessor)
     {
+
+        var path = context.Request.Path.Value?.ToLower() ?? "";
+
+        // Ignorar rotas públicas
+        if (path.StartsWith("/api/tenants/resolve"))
+        {
+            await _next(context);
+            return;
+        }
+
+
         // 1 - Tenta pegar do header
         var hasTenant = context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantHeader);
 
