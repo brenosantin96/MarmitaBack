@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace MarmitaBackend.Controllers
@@ -101,72 +102,88 @@ namespace MarmitaBackend.Controllers
         // POST: api/Orders
         [Authorize]
         [HttpPost]
-        public async Task<ActionResult<Order>> PostOrder(Order order)
+        public async Task<ActionResult<OrderDto>> PostOrder(OrderCreateDto dto)
         {
-            var userId = UserHelper.GetUserId(User);
-
-            if (userId == null)
-                return Unauthorized("Usuário não autenticado.");
-
-            // Verifica se DeliveryInfo existe e pertence ao usuário
-            var deliveryInfo = await _context.DeliveryInfo
-                .Include(di => di.Order)
-                .FirstOrDefaultAsync(di => di.Id == order.DeliveryInfoId && di.UserId == userId);
-
-            if (deliveryInfo == null)
-                return BadRequest("DeliveryInfo inválido ou não pertence ao usuário.");
-
-            // Verifica se já está associado a uma Order
-            if (deliveryInfo.Order != null)
-                return BadRequest("Este DeliveryInfo já está vinculado a um pedido.");
-
-            // Verifica se o Cart pertence ao usuário
-            var cart = await _context.Carts.FirstOrDefaultAsync(c => c.Id == order.CartId && c.UserId == userId);
-
-            if (cart == null)
-                return BadRequest("Carrinho inválido para este usuário.");
-
-            // Adiciona a Order
-            order.CreatedAt = DateTime.UtcNow;
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            // Recarrega com Include para popular DeliveryInfo
-            var createdOrder = await _context.Orders
-                .Include(o => o.DeliveryInfo)
-                .Include(o => o.PaymentMethod)
-                .FirstOrDefaultAsync(o => o.Id == order.Id);
-
-            //DTO de resposta
-            var orderDto = new OrderDto
+            try
             {
-                Id = createdOrder.Id,
-                CartId = createdOrder.CartId,
-                FullName = createdOrder.FullName,
-                Phone = createdOrder.Phone,
-                PaymentMethod = createdOrder.PaymentMethod.Name,
-                Subtotal = createdOrder.Subtotal,
-                DeliveryFee = createdOrder.DeliveryFee,
-                Total = createdOrder.Total,
-                CreatedAt = createdOrder.CreatedAt,
-                DeliveryInfo = new DeliveryInfoDto
+                // 1. Pega tenantId do JWT
+                var tenantIdString = User.FindFirstValue("tenantId");
+                if (tenantIdString == null)
+                    return Unauthorized("TenantId não encontrado no token.");
+
+                int tenantId = int.Parse(tenantIdString);
+
+                // 2. Valida que Cart pertence ao tenant
+                var cart = await _context.Carts
+                    .FirstOrDefaultAsync(c => c.Id == dto.CartId && c.TenantId == tenantId);
+
+                if (cart == null)
+                    return Forbid("Cart não pertence ao tenant atual.");
+
+                // 3. Valida DeliveryInfo pertence ao tenant
+                var deliveryInfo = await _context.DeliveryInfo
+                    .FirstOrDefaultAsync(d => d.Id == dto.DeliveryInfoId && d.TenantId == tenantId);
+
+                if (deliveryInfo == null)
+                    return Forbid("DeliveryInfo não pertence ao tenant atual.");
+
+                // 4. Valida PaymentMethod pertence ao tenant
+                var paymentMethod = await _context.PaymentMethods
+                    .FirstOrDefaultAsync(p => p.Id == dto.PaymentMethodId && p.TenantId == tenantId);
+
+                if (paymentMethod == null)
+                    return Forbid("PaymentMethod não pertence ao tenant atual.");
+
+                // 5. Cria Order
+                var order = new Order
                 {
-                    Id = createdOrder.DeliveryInfo.Id,
-                    DeliveryDate = createdOrder.DeliveryInfo.DeliveryDate,
-                    DeliveryPeriod = createdOrder.DeliveryInfo.DeliveryPeriod,
-                    DeliveryType = createdOrder.DeliveryInfo.DeliveryType,
-                    CanLeaveAtDoor = createdOrder.DeliveryInfo.CanLeaveAtDoor,
-                    AddressId = createdOrder.DeliveryInfo.AddressId
-                }
-            };
+                    TenantId = tenantId,
+                    CartId = dto.CartId,
+                    DeliveryInfoId = dto.DeliveryInfoId,
+                    PaymentMethodId = dto.PaymentMethodId,
 
-            return CreatedAtAction("GetOrder", new { id = createdOrder.Id }, orderDto);
+                    FullName = dto.FullName,
+                    Phone = dto.Phone,
 
+                    Subtotal = dto.Subtotal,
+                    DeliveryFee = dto.DeliveryFee,
+                    Total = dto.Total,
 
+                    CreatedAt = DateTime.UtcNow
+                };
 
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
 
+                // 6. Retorna OrderDto
+                var orderDto = new OrderDto
+                {
+                    Id = order.Id,
+                    CartId = order.CartId,
+                    DeliveryInfo = new DeliveryInfoDto
+                    {
+                        DeliveryDate = deliveryInfo.DeliveryDate,
+                        DeliveryPeriod = deliveryInfo.DeliveryPeriod,
+                        CanLeaveAtDoor = deliveryInfo.CanLeaveAtDoor,  
+                    },
+                    FullName = order.FullName,
+                    Phone = order.Phone,
+                    PaymentMethod = paymentMethod.Name,
+                    Subtotal = order.Subtotal,
+                    DeliveryFee = order.DeliveryFee,
+                    Total = order.Total,
+                    CreatedAt = order.CreatedAt
+                };
 
+                return Ok(orderDto);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return StatusCode(500, "Erro ao criar pedido.");
+            }
         }
+
 
         // DELETE: api/Orders/5
         [HttpDelete("{id}")]

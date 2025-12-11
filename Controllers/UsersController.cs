@@ -75,7 +75,7 @@ namespace MarmitaBackend.Controllers
                 Name = dto.Name,
                 Email = dto.Email,
                 Password = dto.Password,
-                TenantId = _tenantProvider.TenantId 
+                TenantId = _tenantProvider.TenantId
             };
 
             _context.Add(user);
@@ -127,7 +127,7 @@ namespace MarmitaBackend.Controllers
             {
                 // TENANT MULTITENANT
                 int tenantId = _tenantProvider.TenantId;
-                
+
                 Console.WriteLine($"[GoogleLogin] Tenant atual = {tenantId}");
 
                 using var client = new HttpClient();
@@ -211,65 +211,69 @@ namespace MarmitaBackend.Controllers
         }
 
 
-        [HttpGet]
-        [Route("me")]
+        [HttpGet("me")]
         public IActionResult ValidateToken()
         {
             try
             {
                 var authHeader = Request.Headers["Authorization"].FirstOrDefault();
-
-                if (authHeader == null)
-                {
-                    return Unauthorized(new { msg = "Token não fornecido" });
-                }
+                if (authHeader == null || !authHeader.StartsWith("Bearer "))
+                    return Unauthorized(new { msg = "Token não fornecido ou inválido" });
 
                 var token = authHeader.Substring("Bearer ".Length).Trim();
-                var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+                var tokenHandler = new JwtSecurityTokenHandler();
                 var key = Encoding.UTF8.GetBytes(_jwtConfig.Key);
 
                 var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
-
-                    ValidateIssuer = false,
-                    ValidateAudience = false,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidIssuer = _jwtConfig.Issuer,
+                    ValidAudience = _jwtConfig.Audience,
                     ValidateIssuerSigningKey = true,
-                    ClockSkew = TimeSpan.Zero // não deixa margem extra além do exp
-
-
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ClockSkew = TimeSpan.Zero
                 }, out SecurityToken validatedToken);
 
-                //pegando claims do token
-                var userId = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-                var name = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
-                var email = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-                var role = principal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+                // garante que é um JWT
+                if (validatedToken is not JwtSecurityToken)
+                    return Unauthorized(new { msg = "Token inválido" });
 
-                //condição ternária
-                var isAdmin = role == "Admin" ? true : false;
+                // ============ MULTITENANCY CHECK ============
+                var tokenTenantId = principal.Claims.FirstOrDefault(c => c.Type == "tenantId")?.Value;
 
+                if (tokenTenantId == null)
+                    return Unauthorized(new { msg = "Token sem TenantId" });
+
+                if (tokenTenantId != _tenantProvider.TenantId.ToString())
+                    return Unauthorized(new { msg = "Token pertence a outro tenant" });
+                // ============================================
+
+                var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+                var name = principal.FindFirstValue(ClaimTypes.Name);
+                var email = principal.FindFirstValue(ClaimTypes.Email);
+                var role = principal.FindFirstValue(ClaimTypes.Role);
+                var tenantId = principal.FindFirstValue("tenantId");
 
                 return Ok(new
                 {
                     msg = "Token válido",
-                    user = new 
+                    user = new
                     {
                         id = userId,
                         name = name,
                         email = email,
-                        isAdmin = isAdmin
+                        isAdmin = role == "Admin",
+                        tenantId = tenantId
                     }
-                }
-                );
-
+                });
             }
             catch (Exception ex)
             {
                 return Unauthorized(new { msg = "Token inválido", error = ex.Message });
-
             }
         }
+
 
 
         private string GenerateJwtToken(User user)
@@ -283,7 +287,10 @@ namespace MarmitaBackend.Controllers
         new Claim(ClaimTypes.Name, user.Name),
         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         new Claim(ClaimTypes.Email, user.Email),
-        new Claim(ClaimTypes.Role, user.isAdmin ? "Admin" : "User")
+        new Claim(ClaimTypes.Role, user.isAdmin ? "Admin" : "User"),
+
+        //multitenant
+        new Claim("tenantId", user.TenantId.ToString())
     };
 
             var token = new JwtSecurityToken(
@@ -311,7 +318,9 @@ namespace MarmitaBackend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users
+                .Where(u => u.TenantId == _tenantProvider.TenantId)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
             {
