@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 
 
 namespace MarmitaBackend
@@ -64,7 +65,6 @@ namespace MarmitaBackend
                 {
                     options.RequireHttpsMetadata = false; // Set to true in production
                     options.SaveToken = true; // Salvar o token no contexto da requisição. Define se o token deve ser salvo no contexto da requisição após a validação.
-
                     options.TokenValidationParameters = new TokenValidationParameters
                     {
                         ValidateIssuer = true, // Valida o emissor do token (Define se o emissor (issuer) do token deve ser validado)
@@ -79,6 +79,27 @@ namespace MarmitaBackend
                         ValidateLifetime = true, // Verifica se o token expirou, Define se o tempo de vida do token (validade) deve ser verificado. Isso garante que tokens expirados não sejam aceitos.
                         ClockSkew = TimeSpan.Zero // Remove tempo extra para expiração do token Por padrão, o ClockSkew é de 5 minutos. Definir como TimeSpan.Zero remove essa tolerância.
                     };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = async context =>
+                        {
+                            context.HandleResponse(); // impede resposta padrão
+
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            context.Response.ContentType = "application/json";
+
+                            await context.Response.WriteAsync(
+                                JsonSerializer.Serialize(new
+                                {
+                                    error = "Não autenticado",
+                                    message = "Token JWT ausente ou inválido"
+                                })
+                            );
+                        }
+
+                    };
+
                 });
 
 

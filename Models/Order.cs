@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+﻿using MarmitaBackend.Enums;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using System.Net;
 using System.Text.Json.Serialization;
 
@@ -36,7 +37,10 @@ namespace MarmitaBackend.Models
         public decimal DeliveryFee { get; set; }
         public decimal Total { get; set; }
 
-        public DateTime CreatedAt { get; set; }
+        //status do pedido
+        public OrderStatus Status { get; set; } = OrderStatus.PendingPayment; //começa com status pagamento pendente
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow; //comeca com tempo de quando o pedido foi criado
     }
 
 }
