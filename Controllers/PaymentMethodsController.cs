@@ -43,7 +43,7 @@ namespace MarmitaBackend.Controllers
                     .AnyAsync(u => u.Id == loggedUserId && u.isAdmin);
 
                 if (!isAdmin)
-                    return Forbid("Somente administradores podem listar os métodos de pagamento.");
+                    return Forbid();
 
 
                 var paymentMethods = await _context.PaymentMethods

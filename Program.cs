@@ -96,7 +96,23 @@ namespace MarmitaBackend
                                     message = "Token JWT ausente ou inválido"
                                 })
                             );
+                        },
+
+                        OnForbidden = async context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            context.Response.ContentType = "application/json";
+
+                            await context.Response.WriteAsync(
+                                JsonSerializer.Serialize(new
+                                {
+                                    error = "Acesso negado",
+                                    message = "Você não tem permissão para acessar este recurso"
+                                })
+                            );
                         }
+
+
 
                     };
 

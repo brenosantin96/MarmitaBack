@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MarmitaBackend.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251218191231_AddOrderStatusToOrders")]
-    partial class AddOrderStatusToOrders
+    [Migration("20251231113412_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -182,6 +182,9 @@ namespace MarmitaBackend.Migrations
                     b.Property<bool>("CanLeaveAtDoor")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<int>("CartId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("datetime(6)");
 
@@ -202,6 +205,8 @@ namespace MarmitaBackend.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AddressId");
+
+                    b.HasIndex("CartId");
 
                     b.HasIndex("TenantId");
 
@@ -350,6 +355,9 @@ namespace MarmitaBackend.Migrations
                     b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("Subtotal")
                         .HasColumnType("decimal(65,30)");
@@ -543,6 +551,12 @@ namespace MarmitaBackend.Migrations
                         .WithMany()
                         .HasForeignKey("AddressId");
 
+                    b.HasOne("MarmitaBackend.Models.Cart", "Cart")
+                        .WithMany()
+                        .HasForeignKey("CartId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("MarmitaBackend.Models.Tenant", "Tenant")
                         .WithMany()
                         .HasForeignKey("TenantId")
@@ -556,6 +570,8 @@ namespace MarmitaBackend.Migrations
                         .IsRequired();
 
                     b.Navigation("Address");
+
+                    b.Navigation("Cart");
 
                     b.Navigation("Tenant");
 

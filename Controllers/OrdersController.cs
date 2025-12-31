@@ -149,6 +149,8 @@ namespace MarmitaBackend.Controllers
                     DeliveryFee = dto.DeliveryFee,
                     Total = dto.Total,
 
+                    Status = Enums.OrderStatus.PendingPayment,
+
                     CreatedAt = DateTime.UtcNow
                 };
 

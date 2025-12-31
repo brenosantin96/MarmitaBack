@@ -13,6 +13,12 @@ namespace MarmitaBackend.Models
         [ValidateNever]
         public Tenant Tenant { get; set; } = null!;
 
+        public int CartId { get; set; }
+
+        [JsonIgnore]
+        [ValidateNever]
+        public Cart Cart { get; set; }
+
 
 
         public int UserId { get; set; }
