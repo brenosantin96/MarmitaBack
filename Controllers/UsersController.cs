@@ -70,11 +70,14 @@ namespace MarmitaBackend.Controllers
                 return BadRequest(new { message = "User with this email already exists" });
             }
 
+            Console.WriteLine($"DTO IsAdmin = {dto.IsAdmin}");
+
             var user = new User
             {
                 Name = dto.Name,
                 Email = dto.Email,
                 Password = dto.Password,
+                isAdmin = dto.IsAdmin,
                 TenantId = _tenantProvider.TenantId
             };
 
