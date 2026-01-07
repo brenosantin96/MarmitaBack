@@ -5,6 +5,7 @@ namespace MarmitaBackend.Models
 {
     public class PaymentMethod
     {
+        
         public int Id { get; set; }
 
         public int TenantId { get; set; }
