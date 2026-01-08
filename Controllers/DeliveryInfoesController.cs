@@ -63,8 +63,10 @@ namespace MarmitaBackend.Controllers
                         di.TenantId == _tenantProvider.TenantId &&
                         di.UserId == userId
                     )
-                    .OrderByDescending(di => di.DeliveryDate) 
-                    .ToListAsync();
+                    .OrderByDescending(di => di.DeliveryDate)
+                    .ToListAsync(); //retorna uma lista de deliveryInfos desse usuario
+
+
 
                 return Ok(deliveryInfos);
             }
@@ -74,40 +76,49 @@ namespace MarmitaBackend.Controllers
             }
         }
 
-
-        [HttpPost]
-        public async Task<ActionResult<DeliveryInfo>> PostDeliveryInfo(DeliveryInfoCreateDto dto)
+        //Cart > DeliveryInfo > Payment > Order
+        // GET: api/DeliveryInfoes/current
+        [Authorize]
+        [HttpGet("current")]
+        public async Task<ActionResult<DeliveryInfoDto>> GetDeliveryInfoByCurrentCart()
         {
-
             try
             {
                 var userId = UserHelper.GetUserId(User);
 
                 if (userId == null)
-                {
-                    return Unauthorized("Usuario não autenticado");
-                }
+                    return Unauthorized("Usuário não autenticado.");
 
-                var deliveryInfo = new DeliveryInfo
-                {
-                    TenantId = _tenantProvider.TenantId,
-                    UserId = userId.Value,
-                    AddressId = dto.AddressId,
-                    DeliveryType = dto.DeliveryType,
-                    DeliveryDate = dto.DeliveryDate,
-                    DeliveryPeriod = dto.DeliveryPeriod,
-                    CanLeaveAtDoor = dto.CanLeaveAtDoor
+                // 1- Buscar o carrinho ativo do usuário
+                var cart = await _context.Carts
+                    .Where(c =>
+                        c.TenantId == _tenantProvider.TenantId &&
+                        c.UserId == userId &&
+                        !c.IsCheckedOut
+                    )
+                    .OrderByDescending(c => c.CreatedAt)
+                    .FirstOrDefaultAsync();
 
-                };
+                if (cart == null)
+                    return NotFound("Carrinho ativo não encontrado.");
 
-                _context.DeliveryInfo.Add(deliveryInfo);
-                await _context.SaveChangesAsync();
+                // 2- Buscar o DeliveryInfo desse carrinho
+                var deliveryInfo = await _context.DeliveryInfo
+                    .Where(di =>
+                        di.TenantId == _tenantProvider.TenantId &&
+                        di.CartId == cart.Id
+                    )
+                    .FirstOrDefaultAsync();
 
-                // Mapeia para DTO de resposta
-                var deliveryInfoDto = new DeliveryInfoDto
+                if (deliveryInfo == null)
+                    return NotFound("DeliveryInfo não encontrado para este carrinho.");
+
+                // 3- Mapear DTO
+                var response = new DeliveryInfoDto
                 {
                     Id = deliveryInfo.Id,
                     UserId = deliveryInfo.UserId,
+                    CartId = deliveryInfo.CartId,
                     AddressId = deliveryInfo.AddressId,
                     DeliveryType = deliveryInfo.DeliveryType,
                     DeliveryDate = deliveryInfo.DeliveryDate,
@@ -115,15 +126,89 @@ namespace MarmitaBackend.Controllers
                     CanLeaveAtDoor = deliveryInfo.CanLeaveAtDoor
                 };
 
-                return CreatedAtAction(nameof(GetDeliveryInfo), new { id = deliveryInfo.Id }, deliveryInfoDto);
-
+                return Ok(response);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return StatusCode(500, ex.Message);
             }
-
         }
+
+
+
+        [Authorize]
+        [HttpPost]
+        public async Task<ActionResult<DeliveryInfoDto>> PostDeliveryInfo([FromBody] DeliveryInfoCreateUpdateDto dto)
+        {
+            try
+            {
+                var userId = UserHelper.GetUserId(User);
+
+                if (userId == null)
+                    return Unauthorized("Usuário não autenticado.");
+
+                // 1- Validar carrinho
+                var cart = await _context.Carts
+                    .FirstOrDefaultAsync(c =>
+                        c.Id == dto.CartId &&
+                        c.UserId == userId &&
+                        c.TenantId == _tenantProvider.TenantId &&
+                        !c.IsCheckedOut
+                    );
+
+                if (cart == null)
+                    return NotFound("Carrinho inválido ou já finalizado.");
+
+                // 2- Verificar se já existe DeliveryInfo para esse carrinho
+                var deliveryInfo = await _context.DeliveryInfo
+                    .FirstOrDefaultAsync(di =>
+                        di.CartId == cart.Id &&
+                        di.TenantId == _tenantProvider.TenantId
+                    );
+
+                // 3 - Create ou Update
+                if (deliveryInfo == null)
+                {
+                    deliveryInfo = new DeliveryInfo
+                    {
+                        TenantId = _tenantProvider.TenantId,
+                        UserId = userId.Value,
+                        CartId = cart.Id
+                    };
+
+                    _context.DeliveryInfo.Add(deliveryInfo);
+                }
+
+                // 4 -  Atualizar dados
+                deliveryInfo.AddressId = dto.AddressId;
+                deliveryInfo.DeliveryType = dto.DeliveryType;
+                deliveryInfo.DeliveryDate = dto.DeliveryDate;
+                deliveryInfo.DeliveryPeriod = dto.DeliveryPeriod;
+                deliveryInfo.CanLeaveAtDoor = dto.CanLeaveAtDoor;
+
+                await _context.SaveChangesAsync();
+
+                // 5- Response DTO
+                var response = new DeliveryInfoDto
+                {
+                    Id = deliveryInfo.Id,
+                    UserId = deliveryInfo.UserId,
+                    CartId = deliveryInfo.CartId,
+                    AddressId = deliveryInfo.AddressId,
+                    DeliveryType = deliveryInfo.DeliveryType,
+                    DeliveryDate = deliveryInfo.DeliveryDate,
+                    DeliveryPeriod = deliveryInfo.DeliveryPeriod,
+                    CanLeaveAtDoor = deliveryInfo.CanLeaveAtDoor
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
 
     }
 }

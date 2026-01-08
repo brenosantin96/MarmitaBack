@@ -23,6 +23,13 @@ public class ExtractTenantMiddleware
             return;
         }
 
+        // Ignorar rotas públicas
+        if (path.StartsWith("/images"))
+        {
+            await _next(context);
+            return;
+        }
+
 
         // 1 - Tenta pegar do header
         var hasTenant = context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantHeader);

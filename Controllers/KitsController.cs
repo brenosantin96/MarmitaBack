@@ -91,7 +91,7 @@ namespace MarmitaBackend.Controllers
         [HttpPost]
         [Route("/api/KitsWithImage")]
         [Authorize]
-        public async Task<ActionResult<Kit>> PostKitWithImage([FromForm] KitCreateDto dto)
+        public async Task<ActionResult<KitResponseDto>> PostKitWithImage([FromForm] KitCreateDto dto)
         {
             if (dto == null)
                 return BadRequest("Kit cannot be null.");
@@ -99,15 +99,24 @@ namespace MarmitaBackend.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            var tenantId = _tenantProvider.TenantId;
+
             // Valida categoria
             bool categoryExists = await _context.Categories
-                .AnyAsync(c => c.Id == dto.CategoryId && c.TenantId == _tenantProvider.TenantId);
+                .AnyAsync(c => c.Id == dto.CategoryId && c.TenantId == tenantId);
 
             if (!categoryExists)
                 return BadRequest("Category does not exist.");
 
-            // Pasta de upload
-            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/kits");
+            // Pasta por tenant
+            string uploadsFolder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "images",
+                tenantId.ToString(),
+                "kits"
+            );
+
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
@@ -118,38 +127,35 @@ namespace MarmitaBackend.Controllers
             using (var stream = new FileStream(filePath, FileMode.Create))
                 await dto.Image.CopyToAsync(stream);
 
-            // Criar kit
             var kit = new Kit
             {
                 Name = dto.Name,
                 Description = dto.Description,
                 Price = dto.Price,
                 CategoryId = dto.CategoryId,
-                ImageUrl = "/images/kits/" + uniqueFileName,
-                TenantId = _tenantProvider.TenantId
+                ImageUrl = $"/images/{tenantId}/kits/{uniqueFileName}",
+                TenantId = tenantId
             };
 
             _context.Kits.Add(kit);
             await _context.SaveChangesAsync();
 
-            // Se veio lista de marmitas → associar
+            // Associa marmitas
             if (dto.LunchboxIds != null)
             {
                 foreach (var lunchboxId in dto.LunchboxIds)
                 {
-                    var lunchbox = await _context.Lunchboxes
-                        .Where(l => l.Id == lunchboxId && l.TenantId == _tenantProvider.TenantId)
-                        .FirstOrDefaultAsync();
+                    bool exists = await _context.Lunchboxes
+                        .AnyAsync(l => l.Id == lunchboxId && l.TenantId == tenantId);
 
-                    if (lunchbox != null)
+                    if (exists)
                     {
                         _context.KitLunchboxes.Add(new KitLunchbox
                         {
                             KitId = kit.Id,
                             LunchBoxId = lunchboxId,
                             Quantity = 1,
-                            TenantId = _tenantProvider.TenantId
-
+                            TenantId = tenantId
                         });
                     }
                 }
@@ -168,9 +174,9 @@ namespace MarmitaBackend.Controllers
                 LunchboxIds = dto.LunchboxIds?.ToList() ?? new List<int>()
             };
 
-
             return CreatedAtAction("GetKit", new { id = kit.Id }, response);
         }
+
 
         // PUT: api/KitsWithImage/5
         [HttpPut]
@@ -208,6 +214,9 @@ namespace MarmitaBackend.Controllers
             if (dto.Description != null) existingKit.Description = dto.Description;
             if (dto.Price.HasValue) existingKit.Price = dto.Price.Value;
 
+
+            var tenantId = _tenantProvider.TenantId;
+
             // Processamento de nova imagem
             IFormFile? image = dto.Image;
 
@@ -233,8 +242,15 @@ namespace MarmitaBackend.Controllers
                         System.IO.File.Delete(oldPath);
                 }
 
-                // Salva nova
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/kits");
+                // Pasta por tenant
+                string uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    tenantId.ToString(),
+                    "kits"
+                );
+
                 if (!Directory.Exists(uploadsFolder))
                     Directory.CreateDirectory(uploadsFolder);
 
@@ -244,7 +260,7 @@ namespace MarmitaBackend.Controllers
                 using (var stream = new FileStream(filePath, FileMode.Create))
                     await image.CopyToAsync(stream);
 
-                existingKit.ImageUrl = "/images/kits/" + uniqueFileName;
+                existingKit.ImageUrl = $"/images/{tenantId}/kits/{uniqueFileName}";
             }
 
 

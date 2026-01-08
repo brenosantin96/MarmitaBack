@@ -1,8 +1,9 @@
 ﻿namespace MarmitaBackend.DTOs
 {
-    public class DeliveryInfoCreateDto
+    public class DeliveryInfoCreateUpdateDto
     {
         public int? AddressId { get; set; }
+        public int CartId { get; set; }
 
         public string DeliveryType { get; set; } = null!; // "Entrega" ou "Retirada"
 

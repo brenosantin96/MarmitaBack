@@ -69,26 +69,35 @@ namespace MarmitaBackend.Controllers
                 return BadRequest("Category does not exist.");
             }
 
-            //Saving image in server
-            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/lunchboxes");
+            // Tenant atual
+            var tenantId = _tenantProvider.TenantId;
+
+            // Saving image in server (por tenant)
+            string uploadsFolder = Path.Combine(
+                Directory.GetCurrentDirectory(),
+                "wwwroot",
+                "images",
+                tenantId.ToString(),
+                "lunchboxes"
+            );
+
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
             }
 
-
-            //creating uniqueName
-            string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Image.FileName);
+            // creating uniqueName
+            string uniqueFileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
             string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
-            Console.WriteLine($"UploadsFolder: {uploadsFolder} /n UniqueFileName: {uniqueFileName}");
+            Console.WriteLine($"UploadsFolder: {uploadsFolder} \n UniqueFileName: {uniqueFileName}");
 
             using (var fileStream = new FileStream(filePath, FileMode.Create))
             {
                 await dto.Image.CopyToAsync(fileStream);
             }
 
-            //Criar objeto Lunchbox para salvar no banco
+            // Criar objeto Lunchbox para salvar no banco
             var lunchbox = new Lunchbox
             {
                 Name = dto.Name,
@@ -96,27 +105,33 @@ namespace MarmitaBackend.Controllers
                 Price = dto.Price,
                 PortionGram = dto.PortionGram,
                 CategoryId = dto.CategoryId,
-                ImageUrl = "/images/lunchboxes/" + uniqueFileName,
-                TenantId = _tenantProvider.TenantId
+                ImageUrl = $"/images/{tenantId}/lunchboxes/{uniqueFileName}",
+                TenantId = tenantId
             };
 
             _context.Lunchboxes.Add(lunchbox);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetLunchbox", new { id = lunchbox.Id }, lunchbox);
-
         }
+
 
         // PUT: api/LunchboxesWithImage
         [HttpPut]
         [Route("/api/LunchboxesWithImage/{id}")]
+        [Authorize]
         public async Task<IActionResult> PutLunchboxWithImage(int id, [FromForm] LunchboxUpdateDto dto)
         {
             // dto pode ser null se o content-type/form vier quebrado
             if (dto is null)
                 return BadRequest("No form data received.");
 
-            var existingLunchbox = await _context.Lunchboxes.Where(l => l.Id == id && l.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
+            var tenantId = _tenantProvider.TenantId;
+
+            var existingLunchbox = await _context.Lunchboxes
+                .Where(l => l.Id == id && l.TenantId == tenantId)
+                .FirstOrDefaultAsync();
+
             if (existingLunchbox == null)
                 return NotFound("Lunchbox not found.");
 
@@ -126,13 +141,12 @@ namespace MarmitaBackend.Controllers
             // valida categoria
             if (dto.CategoryId != null)
             {
-                bool categoryExists = await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId && c.TenantId == _tenantProvider.TenantId);
+                bool categoryExists = await _context.Categories
+                    .AnyAsync(c => c.Id == dto.CategoryId && c.TenantId == tenantId);
 
                 if (!categoryExists)
                     return BadRequest("Category does not exist.");
-
             }
-
 
             // Atualiza campos básicos
             if (dto.Name != null)
@@ -172,14 +186,22 @@ namespace MarmitaBackend.Controllers
                     string oldPath = Path.Combine(
                         Directory.GetCurrentDirectory(),
                         "wwwroot",
-                        existingLunchbox.ImageUrl.TrimStart('/'));
+                        existingLunchbox.ImageUrl.TrimStart('/')
+                    );
 
                     if (System.IO.File.Exists(oldPath))
                         System.IO.File.Delete(oldPath);
                 }
 
-                // Garante pasta de upload
-                string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images/lunchboxes");
+                // Garante pasta de upload (por tenant)
+                string uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    tenantId.ToString(),
+                    "lunchboxes"
+                );
+
                 if (!Directory.Exists(uploadsFolder))
                     Directory.CreateDirectory(uploadsFolder);
 
@@ -190,15 +212,14 @@ namespace MarmitaBackend.Controllers
                 using (var fileStream = new FileStream(filePath, FileMode.Create))
                     await image.CopyToAsync(fileStream);
 
-                // Atualiza caminho no banco
-                existingLunchbox.ImageUrl = "/images/lunchboxes/" + uniqueFileName;
+                // Atualiza caminho no banco (com tenant)
+                existingLunchbox.ImageUrl = $"/images/{tenantId}/lunchboxes/{uniqueFileName}";
             }
             // --- fim processamento de imagem ---
 
             await _context.SaveChangesAsync();
             return NoContent(); // padrão REST para updates
         }
-
 
 
 
