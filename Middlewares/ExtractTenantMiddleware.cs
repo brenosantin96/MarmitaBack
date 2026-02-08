@@ -38,6 +38,19 @@ public class ExtractTenantMiddleware
 
         if (!hasTenant || string.IsNullOrWhiteSpace(tenantHeader))
         {
+            if (context.RequestServices
+            .GetRequiredService<IHostEnvironment>()
+            .IsDevelopment())
+            {
+                const int devTenantId = 2;
+
+                context.Items["TenantId"] = devTenantId;
+                accessor.TenantId = devTenantId;
+
+                await _next(context);
+                return;
+            }
+
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
             await context.Response.WriteAsync("TenantId header missing");
             return;
