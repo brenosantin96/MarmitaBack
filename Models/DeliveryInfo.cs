@@ -17,7 +17,7 @@ namespace MarmitaBackend.Models
 
         [JsonIgnore]
         [ValidateNever]
-        public Cart Cart { get; set; }
+        public Cart Cart { get; set; } = null!;
 
 
 
@@ -32,8 +32,11 @@ namespace MarmitaBackend.Models
         public Address? Address { get; set; }
 
         public string DeliveryType { get; set; } = null!;  // "Entrega" ou "Retirada"
-        public DateTime DeliveryDate { get; set; }
-        public string DeliveryPeriod { get; set; } = null!; // "manhã", "tarde", "noite"
+
+        public DateTime? DeliveryDate { get; set; }
+
+        public string? DeliveryPeriod { get; set; } // "manhã", "tarde", "noite"
+
         public bool CanLeaveAtDoor { get; set; }
 
         // Relacionamento reverso com Order (1 para 1)

@@ -180,10 +180,16 @@ namespace MarmitaBackend.Controllers
                 }
 
                 // 4 -  Atualizar dados
-                deliveryInfo.AddressId = dto.AddressId;
+                if (dto.AddressId.HasValue)
+                    deliveryInfo.AddressId = dto.AddressId;
+
+                if (dto.DeliveryDate.HasValue)
+                    deliveryInfo.DeliveryDate = dto.DeliveryDate.Value;
+
+                if (dto.DeliveryPeriod != null)
+                    deliveryInfo.DeliveryPeriod = dto.DeliveryPeriod;
+
                 deliveryInfo.DeliveryType = dto.DeliveryType;
-                deliveryInfo.DeliveryDate = dto.DeliveryDate;
-                deliveryInfo.DeliveryPeriod = dto.DeliveryPeriod;
                 deliveryInfo.CanLeaveAtDoor = dto.CanLeaveAtDoor;
 
                 await _context.SaveChangesAsync();

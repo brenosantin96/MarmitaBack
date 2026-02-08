@@ -8,8 +8,8 @@
 
         public int? AddressId { get; set; }
         public string DeliveryType { get; set; } = null!;
-        public DateTime DeliveryDate { get; set; }
-        public string DeliveryPeriod { get; set; } = null!;
+        public DateTime? DeliveryDate { get; set; }
+        public string? DeliveryPeriod { get; set; } = null!;
         public bool CanLeaveAtDoor { get; set; }
 
     }
