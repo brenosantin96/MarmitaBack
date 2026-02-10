@@ -76,6 +76,64 @@ namespace MarmitaBackend.Controllers
             }
         }
 
+        // GET: api/DeliveryInfoes/by-cart/5
+        [Authorize]
+        [HttpGet("by-cart/{cartId}")]
+        public async Task<ActionResult<DeliveryInfoDto>> GetDeliveryInfoByCartId(int cartId)
+        {
+            try
+            {
+                var userId = UserHelper.GetUserId(User);
+
+                if (userId == null)
+                    return Unauthorized("Usuário não autenticado.");
+
+                // 1 - Validar se o carrinho pertence ao usuário logado
+                var cart = await _context.Carts
+                    .Where(c =>
+                        c.Id == cartId &&
+                        c.UserId == userId &&
+                        c.TenantId == _tenantProvider.TenantId
+                    )
+                    .FirstOrDefaultAsync();
+
+                if (cart == null)
+                    return NotFound("Carrinho não encontrado ou não pertence ao usuário.");
+
+                // 2 - Buscar DeliveryInfo do carrinho
+                var deliveryInfo = await _context.DeliveryInfo
+                    .Where(di =>
+                        di.CartId == cart.Id &&
+                        di.TenantId == _tenantProvider.TenantId
+                    )
+                    .FirstOrDefaultAsync();
+
+                if (deliveryInfo == null)
+                    return NotFound("DeliveryInfo não encontrado para este carrinho.");
+
+                // 3 - Mapear DTO
+                var response = new DeliveryInfoDto
+                {
+                    Id = deliveryInfo.Id,
+                    UserId = deliveryInfo.UserId,
+                    CartId = deliveryInfo.CartId,
+                    AddressId = deliveryInfo.AddressId,
+                    DeliveryType = deliveryInfo.DeliveryType,
+                    DeliveryDate = deliveryInfo.DeliveryDate,
+                    DeliveryPeriod = deliveryInfo.DeliveryPeriod,
+                    CanLeaveAtDoor = deliveryInfo.CanLeaveAtDoor
+                };
+
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
+
+
+
         //Cart > DeliveryInfo > Payment > Order
         // GET: api/DeliveryInfoes/current
         [Authorize]
