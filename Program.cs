@@ -51,6 +51,9 @@ namespace MarmitaBackend
                 throw new InvalidOperationException("JWT configuration is missing or invalid.");
             }
 
+            //registering gateway key
+            builder.Services.Configure<GatewaySettings>(builder.Configuration.GetSection("Gateway"));
+
             // Register the JwtConfig as a singleton service
             builder.Services.AddSingleton(jwtConfig); // você já tem esse objeto criado antes
             var key = Encoding.ASCII.GetBytes(jwtConfig.Key);  // Convert the JWT key from string to byte array

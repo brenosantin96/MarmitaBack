@@ -1,4 +1,4 @@
-﻿using Humanizer;
+using Humanizer;
 using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
 using MarmitaBackend.Provider;
@@ -72,29 +72,45 @@ namespace MarmitaBackend.Controllers
             // Tenant atual
             var tenantId = _tenantProvider.TenantId;
 
-            // Saving image in server (por tenant)
-            string uploadsFolder = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot",
-                "images",
-                tenantId.ToString(),
-                "lunchboxes"
-            );
+            // Imagem é opcional: se não vier, usa a padrão do wwwroot/images/notavailable1.jpg
+            var hasImage = dto.Image != null
+                           && dto.Image.Length > 0
+                           && !string.IsNullOrWhiteSpace(dto.Image.FileName);
 
-            if (!Directory.Exists(uploadsFolder))
+            string imageUrl;
+
+            if (hasImage)
             {
-                Directory.CreateDirectory(uploadsFolder);
+                // Saving image in server (por tenant)
+                string uploadsFolder = Path.Combine(
+                    Directory.GetCurrentDirectory(),
+                    "wwwroot",
+                    "images",
+                    tenantId.ToString(),
+                    "lunchboxes"
+                );
+
+                if (!Directory.Exists(uploadsFolder))
+                {
+                    Directory.CreateDirectory(uploadsFolder);
+                }
+
+                // creating uniqueName
+                string uniqueFileName = Guid.NewGuid() + Path.GetExtension(dto.Image!.FileName);
+                string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                Console.WriteLine($"UploadsFolder: {uploadsFolder} \n UniqueFileName: {uniqueFileName}");
+
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await dto.Image.CopyToAsync(fileStream);
+                }
+
+                imageUrl = $"/images/{tenantId}/lunchboxes/{uniqueFileName}";
             }
-
-            // creating uniqueName
-            string uniqueFileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
-            string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            Console.WriteLine($"UploadsFolder: {uploadsFolder} \n UniqueFileName: {uniqueFileName}");
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            else
             {
-                await dto.Image.CopyToAsync(fileStream);
+                imageUrl = "/images/notavailable1.jpg";
             }
 
             // Criar objeto Lunchbox para salvar no banco
@@ -105,7 +121,7 @@ namespace MarmitaBackend.Controllers
                 Price = dto.Price,
                 PortionGram = dto.PortionGram,
                 CategoryId = dto.CategoryId,
-                ImageUrl = $"/images/{tenantId}/lunchboxes/{uniqueFileName}",
+                ImageUrl = imageUrl,
                 TenantId = tenantId
             };
 
@@ -181,7 +197,8 @@ namespace MarmitaBackend.Controllers
             if (hasNewImage)
             {
                 // Remove a imagem antiga se existir
-                if (!string.IsNullOrEmpty(existingLunchbox.ImageUrl))
+                if (!string.IsNullOrEmpty(existingLunchbox.ImageUrl)
+                    && !string.Equals(existingLunchbox.ImageUrl, "/images/notavailable1.jpg", StringComparison.OrdinalIgnoreCase))
                 {
                     string oldPath = Path.Combine(
                         Directory.GetCurrentDirectory(),
@@ -245,7 +262,8 @@ namespace MarmitaBackend.Controllers
             Console.WriteLine($"IMAGEURL LUNCHBOX: {lunchbox.ImageUrl}");
 
             var imagePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", lunchbox.ImageUrl.TrimStart('/'));
-            if (System.IO.File.Exists(imagePath))
+            if (!string.Equals(lunchbox.ImageUrl, "/images/notavailable1.jpg", StringComparison.OrdinalIgnoreCase)
+                && System.IO.File.Exists(imagePath))
             {
                 System.IO.File.Delete(imagePath);
             }

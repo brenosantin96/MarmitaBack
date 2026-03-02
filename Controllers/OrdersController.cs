@@ -1,4 +1,3 @@
-﻿using MarmitaBackend.DTOs;
 using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
 using MarmitaBackend.Provider;
@@ -52,11 +51,10 @@ namespace MarmitaBackend.Controllers
                     {
                         Id = o.Id,
                         CartId = o.CartId,
-
-                        // mapeando o DeliveryInfo como objeto aninhado
                         DeliveryInfo = new DeliveryInfoDto
                         {
                             Id = o.DeliveryInfo.Id,
+                            CartId = o.DeliveryInfo.CartId,
                             AddressId = o.DeliveryInfo.AddressId,
                             UserId = o.DeliveryInfo.UserId,
                             CanLeaveAtDoor = o.DeliveryInfo.CanLeaveAtDoor,
@@ -69,9 +67,10 @@ namespace MarmitaBackend.Controllers
                         FullName = o.FullName,
                         Phone = o.Phone,
                         PaymentMethod = o.PaymentMethod.Name,
-                        Subtotal = o.Subtotal,
-                        DeliveryFee = o.DeliveryFee,
-                        Total = o.Total,
+                        Subtotal = Math.Round(o.Subtotal, 2),
+                        DeliveryFee = Math.Round(o.DeliveryFee, 2),
+                        Total = Math.Round(o.Total, 2),
+                        OrderStatus = o.Status,
                         CreatedAt = o.CreatedAt
                     })
                     .ToListAsync();
@@ -86,17 +85,60 @@ namespace MarmitaBackend.Controllers
 
 
         // GET: api/Orders/5
+        [Authorize]
         [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
+        public async Task<ActionResult<OrderDto>> GetOrder(int id)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var loggedUserId = UserHelper.GetUserId(User);
+
+            // Verifica se é admin no tenant atual
+            bool isAdmin = await _context.Users
+                .AnyAsync(u => u.Id == loggedUserId && u.isAdmin);
+
+            // Busca o pedido garantindo que pertence ao tenant atual
+            var order = await _context.Orders
+                .Include(o => o.Cart)
+                .Include(o => o.DeliveryInfo)
+                .Include(o => o.PaymentMethod)
+                .FirstOrDefaultAsync(o => o.Id == id && o.TenantId == _tenantProvider.TenantId);
 
             if (order == null)
             {
                 return NotFound();
             }
 
-            return order;
+            // Se não for admin, só pode ver se o pedido é do próprio usuário
+            if (!isAdmin && order.Cart.UserId != loggedUserId)
+            {
+                return Forbid("Você não tem permissão para visualizar este pedido.");
+            }
+
+            var orderDto = new OrderDto
+            {
+                Id = order.Id,
+                CartId = order.CartId,
+                DeliveryInfo = new DeliveryInfoDto
+                {
+                    Id = order.DeliveryInfo.Id,
+                    CartId = order.DeliveryInfo.CartId,
+                    AddressId = order.DeliveryInfo.AddressId,
+                    UserId = order.DeliveryInfo.UserId,
+                    CanLeaveAtDoor = order.DeliveryInfo.CanLeaveAtDoor,
+                    DeliveryDate = order.DeliveryInfo.DeliveryDate,
+                    DeliveryPeriod = order.DeliveryInfo.DeliveryPeriod,
+                    DeliveryType = order.DeliveryInfo.DeliveryType
+                },
+                FullName = order.FullName,
+                Phone = order.Phone,
+                PaymentMethod = order.PaymentMethod.Name,
+                Subtotal = order.Subtotal,
+                DeliveryFee = order.DeliveryFee,
+                Total = order.Total,
+                OrderStatus = order.Status,
+                CreatedAt = order.CreatedAt
+            };
+
+            return Ok(orderDto);
         }
 
         // POST: api/Orders
@@ -145,9 +187,9 @@ namespace MarmitaBackend.Controllers
                     FullName = dto.FullName,
                     Phone = dto.Phone,
 
-                    Subtotal = dto.Subtotal,
-                    DeliveryFee = dto.DeliveryFee,
-                    Total = dto.Total,
+                    Subtotal = Math.Round(dto.Subtotal, 2),
+                    DeliveryFee = Math.Round(dto.DeliveryFee, 2),
+                    Total = Math.Round(dto.Total, 2),
 
                     Status = Enums.OrderStatus.PendingPayment,
 
@@ -164,9 +206,14 @@ namespace MarmitaBackend.Controllers
                     CartId = order.CartId,
                     DeliveryInfo = new DeliveryInfoDto
                     {
+                        Id = deliveryInfo.Id,
+                        UserId = deliveryInfo.UserId,
+                        CartId = deliveryInfo.CartId,
+                        AddressId = deliveryInfo.AddressId,
+                        DeliveryType = deliveryInfo.DeliveryType,
                         DeliveryDate = deliveryInfo.DeliveryDate,
                         DeliveryPeriod = deliveryInfo.DeliveryPeriod,
-                        CanLeaveAtDoor = deliveryInfo.CanLeaveAtDoor,  
+                        CanLeaveAtDoor = deliveryInfo.CanLeaveAtDoor,
                     },
                     FullName = order.FullName,
                     Phone = order.Phone,
@@ -174,6 +221,7 @@ namespace MarmitaBackend.Controllers
                     Subtotal = order.Subtotal,
                     DeliveryFee = order.DeliveryFee,
                     Total = order.Total,
+                    OrderStatus = order.Status,
                     CreatedAt = order.CreatedAt
                 };
 
@@ -205,6 +253,8 @@ namespace MarmitaBackend.Controllers
 
     }
 }
+
+
 //verificar se usuario esta logado e autenticado
 //receber dados de Order na requisicao. exemplo:
 

@@ -1,4 +1,4 @@
-﻿namespace MarmitaBackend.DTOs
+namespace MarmitaBackend.DTOs
 {
     public class LunchboxCreateDto
     {
@@ -10,7 +10,7 @@
         public int CategoryId { get; set; }
 
         // Aqui vem a imagem enviada no form-data
-        public IFormFile Image { get; set; }
+        public IFormFile? Image { get; set; }
 
     }
 }
