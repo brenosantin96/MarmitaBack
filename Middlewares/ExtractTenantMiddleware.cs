@@ -11,42 +11,27 @@ public class ExtractTenantMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, TenantAccessor accessor)
+    public async Task InvokeAsync(HttpContext context)
     {
 
         var path = context.Request.Path.Value?.ToLower() ?? "";
 
         // Ignorar rotas públicas
-        if (path.StartsWith("/api/tenants/resolve"))
+        if (path.StartsWith("/api/tenants/resolve") || path.StartsWith("/images"))
         {
             await _next(context);
             return;
         }
 
-        // Ignorar rotas públicas
-        if (path.StartsWith("/images"))
-        {
-            await _next(context);
-            return;
-        }
-
-
-        // 1 - Tenta pegar do header
+        // Pegando TenantId do Header
         var hasTenant = context.Request.Headers.TryGetValue("X-Tenant-Id", out var tenantHeader);
-
         Console.WriteLine($"TENANT HEADER: {tenantHeader}");
 
         if (!hasTenant || string.IsNullOrWhiteSpace(tenantHeader))
         {
-            if (context.RequestServices
-            .GetRequiredService<IHostEnvironment>()
-            .IsDevelopment())
+            if (context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
             {
-                const int devTenantId = 2;
-
-                context.Items["TenantId"] = devTenantId;
-                accessor.TenantId = devTenantId;
-
+                context.Items["TenantId"] = 2; // Salva apenas no HttpContext
                 await _next(context);
                 return;
             }
@@ -56,7 +41,7 @@ public class ExtractTenantMiddleware
             return;
         }
 
-        // 2 - Validar inteiro
+        // 2 - Checando se é numero inteiro, se nao for, estoura erro.
         if (!int.TryParse(tenantHeader, out var tenantId))
         {
             context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -66,9 +51,6 @@ public class ExtractTenantMiddleware
 
         // 3 - Armazena no HttpContext
         context.Items["TenantId"] = tenantId;
-
-        // 4 - Armazena no TenantAccessor (SCOPED)
-        accessor.TenantId = tenantId;
 
         // 5 - Continua pipeline
         await _next(context);

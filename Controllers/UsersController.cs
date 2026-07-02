@@ -3,23 +3,13 @@ using MarmitaBackend.Configurations;
 using MarmitaBackend.DTOs;
 using MarmitaBackend.Models;
 using MarmitaBackend.Provider;
-using MarmitaBackend.Utils;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using NuGet.Common;
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
-using System.Threading.Tasks;
 
 
 namespace MarmitaBackend.Controllers
@@ -126,6 +116,10 @@ namespace MarmitaBackend.Controllers
         [HttpPost("google-login")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
         {
+
+            Console.WriteLine(dto);
+
+
             try
             {
                 // TENANT MULTITENANT
@@ -172,7 +166,7 @@ namespace MarmitaBackend.Controllers
                 // Agora o filtro global garante que só busque NO TENANT ATUAL
                 var user = await _context
                     .Users
-                    .FirstOrDefaultAsync(u => u.Email == payload.Email);
+                    .FirstOrDefaultAsync(u => u.Email == payload.Email && u.TenantId == _tenantProvider.TenantId);
 
                 if (user == null)
                 {

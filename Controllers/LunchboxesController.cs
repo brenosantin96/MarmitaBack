@@ -29,7 +29,8 @@ namespace MarmitaBackend.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Lunchbox>>> GetLunchboxes()
         {
-            return await _context.Lunchboxes.Where(x => x.TenantId == _tenantProvider.TenantId).ToListAsync();
+            //return await _context.Lunchboxes.Where(x => x.TenantId == _tenantProvider.TenantId).ToListAsync();
+            return await _context.Lunchboxes.ToListAsync();
         }
 
         // GET: api/Lunchboxes/5

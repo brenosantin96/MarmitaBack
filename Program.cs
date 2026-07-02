@@ -29,13 +29,13 @@ namespace MarmitaBackend
             CultureInfo.DefaultThreadCurrentCulture = defaultCulture;
             CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
 
-            // Add services to the container
-            builder.Services.AddControllers();
+            // Busca controllers com [ApiController], transforma dados JSON-C# e viceversa, entender rotas http
+            builder.Services.AddControllers(); 
+            
 
             //aplicando scoped DI requisicao web.
             builder.Services.AddHttpContextAccessor();            // Necessário para acessar HttpContext
-            builder.Services.AddScoped<TenantAccessor>();
-
+            //builder.Services.AddScoped<TenantAccessor>();
             builder.Services.AddScoped<ITenantProvider, TenantProvider>(); // Um TenantProvider por request
 
             //Adding connection string to the database
