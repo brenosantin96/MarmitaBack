@@ -143,6 +143,7 @@ namespace MarmitaBackend
             });
 
             var app = builder.Build();
+            app.UseCors("AllowFrontend");
 
             //  INSERE O MIDDLEWARE MULTITENANT AQUI, vai rodar antes de tudo
             app.UseMiddleware<ExtractTenantMiddleware>();
@@ -157,7 +158,6 @@ namespace MarmitaBackend
             });
 
             app.UseStaticFiles();
-            app.UseCors("AllowFrontend");
             app.UseAuthentication(); // Enable authentication middleware
             app.UseAuthorization();
 

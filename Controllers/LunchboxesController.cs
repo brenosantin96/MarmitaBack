@@ -35,17 +35,27 @@ namespace MarmitaBackend.Controllers
 
         // GET: api/Lunchboxes/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Lunchbox>> GetLunchbox(int id)
+        public async Task<ActionResult<LunchboxResponseDto>> GetLunchbox(int id)
         {
-            var lunchbox = await _context.Lunchboxes.Where(l => l.Id == id && l.TenantId == _tenantProvider.TenantId).FirstOrDefaultAsync();
-
+            var lunchbox = await _context.Lunchboxes
+                .Where(l => l.Id == id && l.TenantId == _tenantProvider.TenantId)
+                .Select(l => new LunchboxResponseDto
+                {
+                    Id = l.Id,
+                    TenantId = l.TenantId,
+                    Name = l.Name,
+                    Description = l.Description,
+                    Price = l.Price,
+                    ImageUrl = l.ImageUrl,
+                    PortionGram = l.PortionGram,
+                    CategoryId = l.CategoryId
+                })
+                .FirstOrDefaultAsync();
 
             if (lunchbox == null)
-            {
                 return NotFound();
-            }
 
-            return lunchbox;
+            return Ok(lunchbox);
         }
 
         // POST: api/LunchboxesWithImage

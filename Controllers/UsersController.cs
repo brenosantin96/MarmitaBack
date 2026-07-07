@@ -142,6 +142,7 @@ namespace MarmitaBackend.Controllers
                 var content = new FormUrlEncodedContent(values);
                 var response = await client.PostAsync("https://oauth2.googleapis.com/token", content);
                 var responseString = await response.Content.ReadAsStringAsync();
+                Console.WriteLine(responseString);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -152,14 +153,15 @@ namespace MarmitaBackend.Controllers
                     });
                 }
 
-                var tokenData = JsonConvert.DeserializeObject<dynamic>(responseString);
-                string idToken = tokenData.id_token;
+                var tokenData = JsonConvert.DeserializeObject<GoogleLoginResponseDto>(responseString);
+                string idToken = tokenData.IdToken;
 
                 var settings = new GoogleJsonWebSignature.ValidationSettings()
                 {
                     Audience = new List<string> { dto.ClientId }
                 };
 
+                //validando o token recebido da response no "tribunal" do google..
                 var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
 
                 // MULTITENANT:
