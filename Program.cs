@@ -30,8 +30,8 @@ namespace MarmitaBackend
             CultureInfo.DefaultThreadCurrentUICulture = defaultCulture;
 
             // Busca controllers com [ApiController], transforma dados JSON-C# e viceversa, entender rotas http
-            builder.Services.AddControllers(); 
-            
+            builder.Services.AddControllers();
+
 
             //aplicando scoped DI requisicao web.
             builder.Services.AddHttpContextAccessor();            // Necessário para acessar HttpContext
@@ -41,8 +41,12 @@ namespace MarmitaBackend
             //Adding connection string to the database
             // ja estou usando DI do TenantProvider dentro do ApplicationDbContext.
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            {
                 options.UseMySql(builder.Configuration.GetConnectionString("DefaultConnection"),
-                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
+                ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection")));
+                options.EnableSensitiveDataLogging();
+
+            });
 
             //The jwtConfig variable now contains a JwtConfig object with the values extracted from appsettings.json, ready to be used to configure JWT authentication.
             var jwtConfig = builder.Configuration.GetSection("JwtConfig").Get<JwtConfig>();
@@ -60,66 +64,66 @@ namespace MarmitaBackend
 
             //adding authentication and configuring JWT
             builder.Services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-                .AddJwtBearer(options =>
-                {
-                    options.RequireHttpsMetadata = false; // Set to true in production
-                    options.SaveToken = true; // Salvar o token no contexto da requisição. Define se o token deve ser salvo no contexto da requisição após a validação.
-                    options.TokenValidationParameters = new TokenValidationParameters
                     {
-                        ValidateIssuer = true, // Valida o emissor do token (Define se o emissor (issuer) do token deve ser validado)
-                        ValidIssuer = jwtConfig.Issuer, // Emissor permitido (definido no appsettings.json)
-
-                        ValidateAudience = true, // Valida o público do token
-                        ValidAudience = jwtConfig.Audience, // Público permitido (definido no appsettings.json)
-
-                        ValidateIssuerSigningKey = true, // Verifica a chave secreta e define se a chave de assinatura do token deve ser validada, obrigatoria
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key)),// Chave secreta usada para validar o token, obrigatoria
-
-                        ValidateLifetime = true, // Verifica se o token expirou, Define se o tempo de vida do token (validade) deve ser verificado. Isso garante que tokens expirados não sejam aceitos.
-                        ClockSkew = TimeSpan.Zero // Remove tempo extra para expiração do token Por padrão, o ClockSkew é de 5 minutos. Definir como TimeSpan.Zero remove essa tolerância.
-                    };
-
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnChallenge = async context =>
+                        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    })
+                        .AddJwtBearer(options =>
                         {
-                            context.HandleResponse(); // impede resposta padrão
+                            options.RequireHttpsMetadata = false; // Set to true in production
+                            options.SaveToken = true; // Salvar o token no contexto da requisição. Define se o token deve ser salvo no contexto da requisição após a validação.
+                            options.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuer = true, // Valida o emissor do token (Define se o emissor (issuer) do token deve ser validado)
+                                ValidIssuer = jwtConfig.Issuer, // Emissor permitido (definido no appsettings.json)
 
-                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                            context.Response.ContentType = "application/json";
+                                ValidateAudience = true, // Valida o público do token
+                                ValidAudience = jwtConfig.Audience, // Público permitido (definido no appsettings.json)
 
-                            await context.Response.WriteAsync(
-                                JsonSerializer.Serialize(new
+                                ValidateIssuerSigningKey = true, // Verifica a chave secreta e define se a chave de assinatura do token deve ser validada, obrigatoria
+                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Key)),// Chave secreta usada para validar o token, obrigatoria
+
+                                ValidateLifetime = true, // Verifica se o token expirou, Define se o tempo de vida do token (validade) deve ser verificado. Isso garante que tokens expirados não sejam aceitos.
+                                ClockSkew = TimeSpan.Zero // Remove tempo extra para expiração do token Por padrão, o ClockSkew é de 5 minutos. Definir como TimeSpan.Zero remove essa tolerância.
+                            };
+
+                            options.Events = new JwtBearerEvents
+                            {
+                                OnChallenge = async context =>
                                 {
-                                    error = "Não autenticado",
-                                    message = "Token JWT ausente ou inválido"
-                                })
-                            );
-                        },
+                                    context.HandleResponse(); // impede resposta padrão
 
-                        OnForbidden = async context =>
-                        {
-                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
-                            context.Response.ContentType = "application/json";
+                                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                                    context.Response.ContentType = "application/json";
 
-                            await context.Response.WriteAsync(
-                                JsonSerializer.Serialize(new
+                                    await context.Response.WriteAsync(
+                                        JsonSerializer.Serialize(new
+                                        {
+                                            error = "Não autenticado",
+                                            message = "Token JWT ausente ou inválido"
+                                        })
+                                    );
+                                },
+
+                                OnForbidden = async context =>
                                 {
-                                    error = "Acesso negado",
-                                    message = "Você não tem permissão para acessar este recurso"
-                                })
-                            );
-                        }
+                                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                                    context.Response.ContentType = "application/json";
+
+                                    await context.Response.WriteAsync(
+                                        JsonSerializer.Serialize(new
+                                        {
+                                            error = "Acesso negado",
+                                            message = "Você não tem permissão para acessar este recurso"
+                                        })
+                                    );
+                                }
 
 
 
-                    };
+                            };
 
-                });
+                        });
 
 
             //swagger

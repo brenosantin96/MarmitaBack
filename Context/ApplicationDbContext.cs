@@ -76,5 +76,20 @@ public class ApplicationDbContext : DbContext
         modelBuilder.Entity<Kit>()
             .Property(i => i.Price)
             .HasColumnType("decimal(10,2)");
+
+        modelBuilder.Entity<CartItem>()
+    .HasOne(ci => ci.Lunchbox)
+    .WithMany()
+    .HasForeignKey(ci => ci.LunchboxId)
+    .OnDelete(DeleteBehavior.Restrict)
+    .IsRequired(false);
+
+        modelBuilder.Entity<CartItem>()
+            .HasOne(ci => ci.Kit)
+            .WithMany()
+            .HasForeignKey(ci => ci.KitId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
     }
 }

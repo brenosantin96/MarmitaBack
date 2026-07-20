@@ -197,6 +197,65 @@ namespace MarmitaBackend.Controllers
             if (userId == null)
                 return Unauthorized("Usuário não autenticado.");
 
+
+            // ============================================
+            // VALIDAÇÃO DOS ITENS DO CARRINHO
+            // ============================================
+
+            foreach (var item in createCartDto.CartItems)
+            {
+                // Não pode ter Lunchbox e Kit ao mesmo tempo
+                if (item.LunchboxId.HasValue && item.KitId.HasValue)
+                {
+                    return BadRequest(
+                        "Cada item deve possuir apenas um produto: Lunchbox ou Kit."
+                    );
+                }
+
+                // Não pode não possuir nenhum produto
+                if (!item.LunchboxId.HasValue && !item.KitId.HasValue)
+                {
+                    return BadRequest(
+                        "Cada item deve possuir um LunchboxId ou um KitId."
+                    );
+                }
+
+
+                // Valida existência da Lunchbox
+                if (item.LunchboxId.HasValue)
+                {
+                    var lunchboxExists = await _context.Lunchboxes
+                        .AnyAsync(l => l.Id == item.LunchboxId.Value);
+
+                    if (!lunchboxExists)
+                    {
+                        return BadRequest(
+                            $"Lunchbox com ID {item.LunchboxId} não encontrada."
+                        );
+                    }
+                }
+
+
+                // Valida existência do Kit
+                if (item.KitId.HasValue)
+                {
+                    var kitExists = await _context.Kits
+                        .AnyAsync(k => k.Id == item.KitId.Value);
+
+                    if (!kitExists)
+                    {
+                        return BadRequest(
+                            $"Kit com ID {item.KitId} não encontrado."
+                        );
+                    }
+                }
+            }
+
+
+            // ============================================
+            // BUSCA CARRINHO EXISTENTE
+            // ============================================
+
             var cart = await _context.Carts
                 .Where(c => c.TenantId == _tenantProvider.TenantId)
                 .Include(c => c.CartItems)
@@ -205,7 +264,13 @@ namespace MarmitaBackend.Controllers
                     .ThenInclude(ci => ci.Kit)
                 .FirstOrDefaultAsync(c => c.UserId == userId && !c.IsCheckedOut);
 
+
             bool created = false;
+
+
+            // ============================================
+            // CRIA NOVO CARRINHO
+            // ============================================
 
             if (cart == null)
             {
@@ -214,20 +279,34 @@ namespace MarmitaBackend.Controllers
                     UserId = userId.Value,
                     CreatedAt = createCartDto.CreatedAt,
                     IsCheckedOut = createCartDto.isCheckedOut,
+
                     CartItems = createCartDto.CartItems.Select(i => new CartItem
                     {
                         Quantity = i.Quantity,
                         LunchboxId = i.LunchboxId,
                         KitId = i.KitId,
                         TenantId = _tenantProvider.TenantId
+
                     }).ToList(),
+
                     TenantId = _tenantProvider.TenantId
                 };
 
+
+                foreach (var item in cart.CartItems)
+                {
+                    Console.WriteLine(
+                        $"LunchboxId: {item.LunchboxId} | KitId: {item.KitId}"
+                    );
+                }
+
+
                 _context.Carts.Add(cart);
+
                 await _context.SaveChangesAsync();
 
-                // recarrega o carrinho com relacionamentos
+
+                // Recarrega o carrinho com relacionamentos
                 cart = await _context.Carts
                     .Where(c => c.TenantId == _tenantProvider.TenantId)
                     .Include(c => c.CartItems)
@@ -236,11 +315,20 @@ namespace MarmitaBackend.Controllers
                         .ThenInclude(ci => ci.Kit)
                     .FirstOrDefaultAsync(c => c.Id == cart.Id);
 
+
                 created = true;
             }
+
+
+            // ============================================
+            // ATUALIZA CARRINHO EXISTENTE
+            // ============================================
+
             else
             {
                 cart.CartItems.Clear();
+
+
                 foreach (var item in createCartDto.CartItems)
                 {
                     cart.CartItems.Add(new CartItem
@@ -251,9 +339,12 @@ namespace MarmitaBackend.Controllers
                         TenantId = _tenantProvider.TenantId
                     });
                 }
+
+
                 await _context.SaveChangesAsync();
 
-                // recarrega o carrinho atualizado
+
+                // Recarrega carrinho atualizado
                 cart = await _context.Carts
                     .Where(c => c.TenantId == _tenantProvider.TenantId)
                     .Include(c => c.CartItems)
@@ -263,12 +354,19 @@ namespace MarmitaBackend.Controllers
                     .FirstOrDefaultAsync(c => c.Id == cart.Id);
             }
 
+
+
+            // ============================================
+            // MONTA RESPONSE
+            // ============================================
+
             var response = new CartDto
             {
                 Id = cart.Id,
                 UserId = cart.UserId,
                 CreatedAt = cart.CreatedAt,
                 isCheckedOut = cart.IsCheckedOut,
+
                 CartItems = cart.CartItems.Select(ci => new CartItemDto
                 {
                     Id = ci.Id,
@@ -279,12 +377,19 @@ namespace MarmitaBackend.Controllers
                     ImageUrl = ci.Kit?.ImageUrl ?? ci.Lunchbox?.ImageUrl,
                     PortionGram = ci.Lunchbox?.PortionGram,
                     Price = ci.Kit?.Price ?? ci.Lunchbox?.Price
-
                 }).ToList()
             };
 
+
             if (created)
-                return CreatedAtAction(nameof(CreateCartWithItems), new { id = cart.Id }, response);
+            {
+                return CreatedAtAction(
+                    nameof(CreateCartWithItems),
+                    new { id = cart.Id },
+                    response
+                );
+            }
+
 
             return Ok(response);
         }
